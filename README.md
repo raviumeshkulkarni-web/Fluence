@@ -4,6 +4,20 @@ Groq Voice Typer is a lightweight, modern, and privacy-focused Android Voice Key
 
 ---
 
+## 🔒 The Privacy-First USP (Unique Selling Proposition)
+
+**Built for users who love and demand absolute privacy.** 
+
+Unlike conventional voice typing tools and keyboards, **Groq Voice Typer does not collect, store, or transmit any user data, telemetry, or typing behavior.** We believe in building instant user trust through complete transparency:
+
+* **100% Open Source:** The entire codebase is open and inspectable. What you see here is exactly what gets compiled and runs on your device.
+* **No Telemetry or Tracking:** Zero analytics scripts, tracking code, or background usage logging.
+* **Direct HTTPS Communication:** Your recorded audio goes directly from your device to the official Groq API servers via HTTPS (TLS 1.3). No intermediate custom servers or proxies are involved.
+* **Local Encryption at Rest:** Your Groq API Key is encrypted using Android Keystore-backed cryptography (`EncryptedSharedPreferences`).
+* **Zero Audio File Footprint:** Audio files are stored temporarily in private internal cache space and are explicitly deleted the millisecond a transcription finishes or fails.
+
+---
+
 ## Key Features
 
 * **High-Speed Transcription:** Direct integration with Groq's `whisper-large-v3` API for near-instant, high-accuracy English speech-to-text.
