@@ -82,4 +82,4 @@ After installing the app, follow these simple steps inside the configuration wiz
 
 ## License
 
-This project is open-source and available under the [MIT License](LICENSE).
+This project is open-source and available under the [Apache License 2.0](LICENSE).
