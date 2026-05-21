@@ -20,43 +20,57 @@ object GroqClient {
 
     private val client = OkHttpClient.Builder()
         .connectTimeout(30, TimeUnit.SECONDS)
-        .writeTimeout(30, TimeUnit.SECONDS)
-        .readTimeout(30, TimeUnit.SECONDS)
+        .writeTimeout(60, TimeUnit.SECONDS)
+        .readTimeout(60, TimeUnit.SECONDS)
+        .retryOnConnectionFailure(true)
         .build()
 
     /**
      * Sends the audio file directly to the Groq Whisper API for transcription.
-     * Guaranteed to delete the temporary file on completion.
+     * This method takes **ownership** of [audioFile] and guarantees deletion on completion.
+     *
+     * @param apiKey The Groq API key.
+     * @param audioFile The recorded audio file (will be deleted after use).
+     * @param language Optional BCP-47 language code (e.g. "en"). Null for auto-detection.
      */
-    suspend fun transcribe(apiKey: String, audioFile: File): Result<String> = withContext(Dispatchers.IO) {
-        if (!audioFile.exists() || audioFile.length() == 0L) {
-            return@withContext Result.failure(Exception("Audio file is empty or does not exist"))
-        }
-
-        val requestBody = MultipartBody.Builder()
-            .setType(MultipartBody.FORM)
-            .addFormDataPart("model", MODEL_WHISPER)
-            .addFormDataPart("language", "en")
-            .addFormDataPart("response_format", "json")
-            .addFormDataPart(
-                "file",
-                audioFile.name,
-                audioFile.asRequestBody("audio/m4a".toMediaType())
-            )
-            .build()
-
-        val request = Request.Builder()
-            .url(TRANSCRIPTION_URL)
-            .header("Authorization", "Bearer $apiKey")
-            .post(requestBody)
-            .build()
-
+    suspend fun transcribe(
+        apiKey: String,
+        audioFile: File,
+        language: String? = null
+    ): Result<String> = withContext(Dispatchers.IO) {
         try {
+            if (!audioFile.exists() || audioFile.length() == 0L) {
+                return@withContext Result.failure(Exception("Audio file is empty or does not exist"))
+            }
+
+            val bodyBuilder = MultipartBody.Builder()
+                .setType(MultipartBody.FORM)
+                .addFormDataPart("model", MODEL_WHISPER)
+                .addFormDataPart("response_format", "json")
+                .addFormDataPart(
+                    "file",
+                    audioFile.name,
+                    audioFile.asRequestBody("audio/m4a".toMediaType())
+                )
+
+            // Only set language if explicitly provided; otherwise Whisper auto-detects
+            if (!language.isNullOrBlank()) {
+                bodyBuilder.addFormDataPart("language", language)
+            }
+
+            val requestBody = bodyBuilder.build()
+
+            val request = Request.Builder()
+                .url(TRANSCRIPTION_URL)
+                .header("Authorization", "Bearer $apiKey")
+                .post(requestBody)
+                .build()
+
             client.newCall(request).execute().use { response ->
                 val bodyString = response.body?.string()
                 if (!response.isSuccessful) {
                     val errorMessage = parseErrorMessage(bodyString) ?: "HTTP Error ${response.code}"
-                    Log.e(TAG, "Transcription failed: $errorMessage")
+                    Log.e(TAG, "Transcription failed: $errorMessage (HTTP ${response.code})")
                     return@withContext Result.failure(Exception(errorMessage))
                 }
 
@@ -76,11 +90,18 @@ object GroqClient {
         } catch (e: IOException) {
             Log.e(TAG, "Network request failed", e)
             Result.failure(Exception("Network error. Please check your internet connection."))
+        } catch (e: Exception) {
+            Log.e(TAG, "Unexpected error during transcription", e)
+            Result.failure(Exception("An unexpected error occurred: ${e.localizedMessage}"))
         } finally {
             // Explicitly delete the audio file after request is completed or failed
-            if (audioFile.exists()) {
-                val deleted = audioFile.delete()
-                Log.d(TAG, "Temporary audio file deleted: $deleted")
+            try {
+                if (audioFile.exists()) {
+                    val deleted = audioFile.delete()
+                    Log.d(TAG, "Temporary audio file deleted: $deleted")
+                }
+            } catch (e: SecurityException) {
+                Log.w(TAG, "Could not delete temporary audio file", e)
             }
         }
     }

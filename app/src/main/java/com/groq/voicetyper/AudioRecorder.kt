@@ -18,6 +18,8 @@ import java.io.IOException
 class AudioRecorder(private val context: Context) {
     private var mediaRecorder: MediaRecorder? = null
     private var outputFile: File? = null
+
+    @Volatile
     private var isRecording = false
 
     private val _amplitude = MutableStateFlow(0f)
@@ -25,106 +27,138 @@ class AudioRecorder(private val context: Context) {
 
     private var amplitudeJob: Job? = null
     private val scope = CoroutineScope(Dispatchers.IO)
+    private val lock = Any()
 
     fun startRecording() {
-        if (isRecording) return
+        synchronized(lock) {
+            if (isRecording) return
 
-        // Use cache directory for privacy (files remain internal to the app)
-        val cacheFile = File(context.cacheDir, "groq_voice_record_${System.currentTimeMillis()}.m4a")
-        outputFile = cacheFile
+            // Use cache directory for privacy (files remain internal to the app)
+            val cacheFile = File(context.cacheDir, "groq_voice_record_${System.currentTimeMillis()}.m4a")
+            outputFile = cacheFile
 
-        mediaRecorder = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            MediaRecorder(context)
-        } else {
-            @Suppress("DEPRECATION")
-            MediaRecorder()
-        }.apply {
-            setAudioSource(MediaRecorder.AudioSource.MIC)
-            setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
-            setAudioEncoder(MediaRecorder.AudioEncoder.AAC)
-            setOutputFile(cacheFile.absolutePath)
-            setAudioSamplingRate(44100)
-            setAudioEncodingBitRate(96000)
+            val recorder = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                MediaRecorder(context)
+            } else {
+                @Suppress("DEPRECATION")
+                MediaRecorder()
+            }
 
             try {
-                prepare()
-                start()
+                recorder.apply {
+                    setAudioSource(MediaRecorder.AudioSource.MIC)
+                    setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
+                    setAudioEncoder(MediaRecorder.AudioEncoder.AAC)
+                    setOutputFile(cacheFile.absolutePath)
+                    setAudioSamplingRate(44100)
+                    setAudioEncodingBitRate(96000)
+                    prepare()
+                    start()
+                }
+                // Only assign on success — avoids holding a reference to a failed recorder
+                mediaRecorder = recorder
                 isRecording = true
             } catch (e: IOException) {
-                Log.e("AudioRecorder", "Recording preparation failed", e)
-                cleanup()
+                Log.e(TAG, "Recording preparation failed", e)
+                safeRelease(recorder)
+                cleanupFile()
+                return
             } catch (e: IllegalStateException) {
-                Log.e("AudioRecorder", "Recording start failed", e)
-                cleanup()
+                Log.e(TAG, "Recording start failed", e)
+                safeRelease(recorder)
+                cleanupFile()
+                return
+            } catch (e: SecurityException) {
+                Log.e(TAG, "Microphone permission denied at runtime", e)
+                safeRelease(recorder)
+                cleanupFile()
+                return
             }
         }
 
-        if (isRecording) {
-            startAmplitudePolling()
-        }
+        // Start polling outside the lock to avoid holding it during coroutine work
+        startAmplitudePolling()
     }
 
     private fun startAmplitudePolling() {
         amplitudeJob?.cancel()
         amplitudeJob = scope.launch {
             while (isRecording) {
-                val maxAmp = mediaRecorder?.maxAmplitude ?: 0
-                // Normalize 0 to 32767 to a 0.0 to 1.0 float
-                val normalized = (maxAmp.toFloat() / 32767f).coerceIn(0f, 1f)
-                _amplitude.value = normalized
+                try {
+                    val maxAmp = mediaRecorder?.maxAmplitude ?: 0
+                    // Normalize 0–32767 to 0.0–1.0
+                    val normalized = (maxAmp.toFloat() / 32767f).coerceIn(0f, 1f)
+                    _amplitude.value = normalized
+                } catch (e: IllegalStateException) {
+                    // MediaRecorder was released between the null-check and the call
+                    break
+                }
                 delay(50)
             }
         }
     }
 
     fun stopRecording(): File? {
-        if (!isRecording) return null
-        
-        isRecording = false
-        amplitudeJob?.cancel()
-        _amplitude.value = 0f
+        synchronized(lock) {
+            if (!isRecording) return null
 
-        try {
-            mediaRecorder?.apply {
-                stop()
-                release()
+            isRecording = false
+            amplitudeJob?.cancel()
+            _amplitude.value = 0f
+
+            try {
+                mediaRecorder?.apply {
+                    stop()
+                    release()
+                }
+            } catch (e: RuntimeException) {
+                // stop() can fail if recording duration was too short
+                Log.e(TAG, "Stop recording failed (recording too short?)", e)
+                outputFile?.delete()
+                outputFile = null
+            } finally {
+                mediaRecorder = null
             }
-        } catch (e: RuntimeException) {
-            // stop() can fail if recording duration was too short
-            Log.e("AudioRecorder", "Stop recording failed (recording too short?)", e)
-            outputFile?.delete()
-            outputFile = null
-        } finally {
-            mediaRecorder = null
-        }
 
-        return outputFile
+            return outputFile
+        }
     }
 
     fun cancelRecording() {
-        isRecording = false
-        amplitudeJob?.cancel()
-        _amplitude.value = 0f
+        synchronized(lock) {
+            isRecording = false
+            amplitudeJob?.cancel()
+            _amplitude.value = 0f
 
-        try {
-            mediaRecorder?.apply {
-                stop()
-                release()
+            try {
+                mediaRecorder?.apply {
+                    stop()
+                    release()
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Cancel recording failed", e)
+            } finally {
+                mediaRecorder = null
+                outputFile?.delete()
+                outputFile = null
             }
-        } catch (e: Exception) {
-            Log.e("AudioRecorder", "Cancel recording failed", e)
-        } finally {
-            mediaRecorder = null
-            outputFile?.delete()
-            outputFile = null
         }
     }
 
-    private fun cleanup() {
-        isRecording = false
-        mediaRecorder?.release()
-        mediaRecorder = null
+    private fun safeRelease(recorder: MediaRecorder) {
+        try {
+            recorder.release()
+        } catch (e: Exception) {
+            Log.w(TAG, "Release failed during cleanup", e)
+        }
+    }
+
+    private fun cleanupFile() {
         outputFile?.delete()
         outputFile = null
+    }
+
+    companion object {
+        private const val TAG = "AudioRecorder"
     }
 }

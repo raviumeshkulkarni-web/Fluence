@@ -3,21 +3,49 @@ package com.groq.voicetyper
 import android.content.Context
 import android.view.inputmethod.InputMethodManager
 import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.*
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTapGestures
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -25,13 +53,13 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
-import java.io.File
+import java.util.Locale
 
 enum class RecordingState {
     IDLE,
@@ -44,11 +72,9 @@ enum class RecordingState {
 fun IMEScreen(
     audioRecorder: AudioRecorder,
     apiKey: String?,
-    onInsertText: (String) -> Unit,
     onBackspace: () -> Unit,
     onSpace: () -> Unit,
     onEnter: () -> Unit,
-    onSendRecording: (File) -> Unit,
     recordingState: RecordingState,
     errorMessage: String?,
     onCancelRecording: () -> Unit,
@@ -87,7 +113,7 @@ fun IMEScreen(
 
     val minutes = recordTimeSeconds / 60
     val seconds = recordTimeSeconds % 60
-    val timeText = String.format("%02d:%02d", minutes, seconds)
+    val timeText = String.format(Locale.US, "%02d:%02d", minutes, seconds)
 
     // Keyboard container layout
     Column(
@@ -132,7 +158,7 @@ fun IMEScreen(
                     color = Color.White,
                     fontSize = 13.sp,
                     fontWeight = FontWeight.Bold,
-                    fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace
+                    fontFamily = FontFamily.Monospace
                 )
             }
         }
@@ -168,7 +194,6 @@ fun IMEScreen(
                         val barHeight = (amp * height * 0.8f).coerceAtLeast(6f)
                         val x = startX + i * (barWidth + barGap)
                         val y1 = centerY - barHeight / 2f
-                        val y2 = centerY + barHeight / 2f
 
                         drawRoundRect(
                             brush = gradient,
@@ -252,6 +277,13 @@ fun IMEScreen(
 
             // Center Action: Voice button (Tap & Hold)
             val isEnabled = !apiKey.isNullOrBlank() && recordingState != RecordingState.TRANSCRIBING
+
+            // rememberUpdatedState ensures the gesture coroutine always reads
+            // the LATEST values, even though pointerInput's coroutine doesn't restart.
+            val currentRecordingState by rememberUpdatedState(recordingState)
+            val currentOnStartRecording by rememberUpdatedState(onStartRecording)
+            val currentOnStopRecording by rememberUpdatedState(onStopRecording)
+            val currentOnCancelRecording by rememberUpdatedState(onCancelRecording)
             
             // Pulse animation when recording
             val infiniteTransition = rememberInfiniteTransition(label = "pulse")
@@ -285,31 +317,29 @@ fun IMEScreen(
                         
                         detectTapGestures(
                             onPress = {
-                                // Hold-to-speak logic
-                                val startTime = System.currentTimeMillis()
-                                onStartRecording()
-                                
-                                try {
-                                    awaitRelease()
-                                    // Stop recording on release
-                                    val duration = System.currentTimeMillis() - startTime
-                                    if (duration > 400) { // If held for more than 400ms, stop and transcribe
-                                        onStopRecording()
-                                    } else {
-                                        // Keep recording running for tap-to-toggle behavior
-                                    }
-                                } catch (c: Exception) {
-                                    onCancelRecording()
+                                if (currentRecordingState == RecordingState.RECORDING) {
+                                    // Second tap: stop recording (toggle behavior)
+                                    currentOnStopRecording()
+                                    return@detectTapGestures
                                 }
-                            },
-                            onTap = {
-                                // Tap-to-toggle logic
-                                if (recordingState == RecordingState.RECORDING) {
-                                    onStopRecording()
+
+                                currentOnStartRecording()
+                                val startTime = System.currentTimeMillis()
+                                
+                                val released = tryAwaitRelease()
+                                if (released) {
+                                    val duration = System.currentTimeMillis() - startTime
+                                    if (duration > 500) {
+                                        // Held for more than 500ms, stop and transcribe (hold-to-speak)
+                                        currentOnStopRecording()
+                                    }
+                                    // Else short tap (< 500ms): leave recording running for tap-to-toggle
                                 } else {
-                                    // Handled by onPress initially, so if tap completed quickly we just keep it recording
+                                    // Gesture cancelled before release
+                                    currentOnCancelRecording()
                                 }
                             }
+                            // Removed onTap entirely as it was racing with onPress
                         )
                     },
                 contentAlignment = Alignment.Center
@@ -325,14 +355,14 @@ fun IMEScreen(
                         lineTo(w * 0.65f, h * 0.2f)
                         // Round corners
                         arcTo(
-                            rect = androidx.compose.ui.geometry.Rect(w * 0.35f, h * 0.1f, w * 0.65f, h * 0.4f),
+                            rect = Rect(w * 0.35f, h * 0.1f, w * 0.65f, h * 0.4f),
                             startAngleDegrees = 180f,
                             sweepAngleDegrees = 180f,
                             forceMoveTo = false
                         )
                         lineTo(w * 0.65f, h * 0.55f)
                         arcTo(
-                            rect = androidx.compose.ui.geometry.Rect(w * 0.35f, h * 0.45f, w * 0.65f, h * 0.65f),
+                            rect = Rect(w * 0.35f, h * 0.45f, w * 0.65f, h * 0.65f),
                             startAngleDegrees = 0f,
                             sweepAngleDegrees = 180f,
                             forceMoveTo = false
@@ -348,7 +378,7 @@ fun IMEScreen(
                     val standPath = Path().apply {
                         moveTo(w * 0.25f, h * 0.45f)
                         arcTo(
-                            rect = androidx.compose.ui.geometry.Rect(w * 0.25f, h * 0.35f, w * 0.75f, h * 0.75f),
+                            rect = Rect(w * 0.25f, h * 0.35f, w * 0.75f, h * 0.75f),
                             startAngleDegrees = 180f,
                             sweepAngleDegrees = -180f,
                             forceMoveTo = true

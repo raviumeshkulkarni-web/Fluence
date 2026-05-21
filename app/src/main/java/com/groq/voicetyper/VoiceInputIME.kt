@@ -7,10 +7,10 @@ import android.util.Log
 import android.view.KeyEvent
 import android.view.View
 import android.view.inputmethod.EditorInfo
-import androidx.compose.ui.platform.ComposeView
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.platform.ComposeView
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.LifecycleRegistry
@@ -22,7 +22,11 @@ import androidx.savedstate.SavedStateRegistry
 import androidx.savedstate.SavedStateRegistryController
 import androidx.savedstate.SavedStateRegistryOwner
 import androidx.savedstate.setViewTreeSavedStateRegistryOwner
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.launch
 import java.io.File
 
 class VoiceInputIME : InputMethodService(), LifecycleOwner, ViewModelStoreOwner, SavedStateRegistryOwner {
@@ -40,9 +44,10 @@ class VoiceInputIME : InputMethodService(), LifecycleOwner, ViewModelStoreOwner,
     override val savedStateRegistry: SavedStateRegistry
         get() = savedStateRegistryController.savedStateRegistry
 
-    private var scope = CoroutineScope(Dispatchers.Main + SupervisorJob())
+    // Re-created in onCreate to ensure a fresh scope after destroy/re-create cycles
+    private lateinit var scope: CoroutineScope
     private lateinit var audioRecorder: AudioRecorder
-    
+
     // IME State
     private var apiKey by mutableStateOf<String?>(null)
     private var recordingState by mutableStateOf(RecordingState.IDLE)
@@ -50,10 +55,12 @@ class VoiceInputIME : InputMethodService(), LifecycleOwner, ViewModelStoreOwner,
     private val errorHandler = Handler(Looper.getMainLooper())
 
     override fun onCreate() {
+        super.onCreate()
         savedStateRegistryController.performAttach()
         savedStateRegistryController.performRestore(null)
-        super.onCreate()
         lifecycleRegistry.handleLifecycleEvent(Lifecycle.Event.ON_CREATE)
+
+        scope = CoroutineScope(Dispatchers.Main + SupervisorJob())
         audioRecorder = AudioRecorder(this)
     }
 
@@ -76,27 +83,17 @@ class VoiceInputIME : InputMethodService(), LifecycleOwner, ViewModelStoreOwner,
             IMEScreen(
                 audioRecorder = audioRecorder,
                 apiKey = apiKey,
-                onInsertText = { text ->
-                    val conn = currentInputConnection
-                    conn?.commitText(text, 1)
-                },
                 onBackspace = {
-                    val conn = currentInputConnection
-                    conn?.deleteSurroundingText(1, 0)
+                    currentInputConnection?.deleteSurroundingText(1, 0)
                 },
                 onSpace = {
-                    val conn = currentInputConnection
-                    conn?.commitText(" ", 1)
+                    currentInputConnection?.commitText(" ", 1)
                 },
                 onEnter = {
-                    val conn = currentInputConnection
-                    if (conn != null) {
+                    currentInputConnection?.let { conn ->
                         conn.sendKeyEvent(KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_ENTER))
                         conn.sendKeyEvent(KeyEvent(KeyEvent.ACTION_UP, KeyEvent.KEYCODE_ENTER))
                     }
-                },
-                onSendRecording = { file ->
-                    transcribeAudio(file)
                 },
                 recordingState = recordingState,
                 errorMessage = errorMessage,
@@ -129,7 +126,7 @@ class VoiceInputIME : InputMethodService(), LifecycleOwner, ViewModelStoreOwner,
         apiKey = SecurityUtils.getApiKey(this)
         recordingState = RecordingState.IDLE
         errorMessage = null
-        
+
         lifecycleRegistry.handleLifecycleEvent(Lifecycle.Event.ON_START)
         lifecycleRegistry.handleLifecycleEvent(Lifecycle.Event.ON_RESUME)
     }
@@ -141,22 +138,28 @@ class VoiceInputIME : InputMethodService(), LifecycleOwner, ViewModelStoreOwner,
             audioRecorder.cancelRecording()
         }
         recordingState = RecordingState.IDLE
-        
+
         lifecycleRegistry.handleLifecycleEvent(Lifecycle.Event.ON_PAUSE)
         lifecycleRegistry.handleLifecycleEvent(Lifecycle.Event.ON_STOP)
     }
 
     override fun onDestroy() {
-        super.onDestroy()
+        errorHandler.removeCallbacksAndMessages(null)
         lifecycleRegistry.handleLifecycleEvent(Lifecycle.Event.ON_DESTROY)
         store.clear()
         scope.cancel()
+        super.onDestroy()
     }
 
+    /**
+     * Sends audio to GroqClient for transcription and commits the result to the input field.
+     * File ownership is transferred to GroqClient — it handles deletion.
+     */
     private fun transcribeAudio(file: File) {
         val key = apiKey
         if (key.isNullOrBlank()) {
             showError("API Key is missing. Set it in the app.")
+            // GroqClient owns file deletion, but since we're not calling it, delete here
             file.delete()
             return
         }
@@ -168,8 +171,7 @@ class VoiceInputIME : InputMethodService(), LifecycleOwner, ViewModelStoreOwner,
             result.fold(
                 onSuccess = { text ->
                     if (text.isNotBlank()) {
-                        val connection = currentInputConnection
-                        if (connection != null) {
+                        currentInputConnection?.let { connection ->
                             // Trim and insert with a clean trailing space for easy formatting
                             val cleanText = text.trim()
                             connection.commitText("$cleanText ", 1)
@@ -187,8 +189,8 @@ class VoiceInputIME : InputMethodService(), LifecycleOwner, ViewModelStoreOwner,
     private fun showError(message: String) {
         errorMessage = message
         recordingState = RecordingState.ERROR
-        Log.e("VoiceInputIME", "Error: $message")
-        
+        Log.e(TAG, "Error: $message")
+
         // Auto-clear error state back to IDLE after 4 seconds
         errorHandler.removeCallbacksAndMessages(null)
         errorHandler.postDelayed({
@@ -197,5 +199,9 @@ class VoiceInputIME : InputMethodService(), LifecycleOwner, ViewModelStoreOwner,
                 errorMessage = null
             }
         }, 4000)
+    }
+
+    companion object {
+        private const val TAG = "VoiceInputIME"
     }
 }
