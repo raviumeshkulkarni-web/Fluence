@@ -50,7 +50,7 @@ Unlike conventional voice typing tools and keyboards, **Groq Voice Typer does no
 
 1. Clone this repository:
    ```bash
-   git clone https://github.com/raviumeshkulkarni-web/Voice-typer.git
+   git clone https://github.com/raviumeshkulkarni-web/AI-Voice-typer.git
    ```
 2. Open the project in **Android Studio** (Koala or newer recommended).
 3. Connect your Android device (with USB debugging enabled) or start an Emulator.
