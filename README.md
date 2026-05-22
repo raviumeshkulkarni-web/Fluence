@@ -20,7 +20,7 @@ AI Voice Typer is a lightweight, modern, and privacy-focused Android Voice Keybo
 
 Most voice typing tools compromise between accuracy, privacy, and speed. **AI Voice Typer doesn't.**
 
-It's powered by **OpenAI Whisper Large v3** running on Groq's ultra-fast inference hardware — delivering accuracy that beats every built-in dictation tool available today, without any background telemetry or data collection.
+It's powered by **OpenAI Whisper Large v3** running on Groq's ultra-fast inference hardware, delivering accuracy that beats every built-in dictation tool available today, without any background telemetry or data collection.
 
 | Metric / Feature | **AI Voice Typer** (Whisper v3 on Groq) | Google Speech-to-Text | Windows Dictation (Win + H) |
 |---|---|---|---|
