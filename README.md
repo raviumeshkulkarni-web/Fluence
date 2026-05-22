@@ -28,7 +28,7 @@ It's powered by **OpenAI Whisper Large v3** running on Groq's ultra-fast inferen
 | **Word Error Rate (WER)** | ~2.7% *(clean audio)* | ~11.6% – 16.5% | ~10% – 15% |
 | **Processing Style** | Contextual Batch *(phrases)* | Streaming *(word-by-word)* | Streaming *(word-by-word)* |
 | **Background Noise Handling** | ✅ Excellent *(trained on raw audio)* | 🟡 Good *(cloud filtering)* | 🔴 Average *(struggles with cross-talk)* |
-| **Privacy** | ✅ Open source, no telemetry | ❌ Data sent to Google | ❌ Data sent to Microsoft |
+| **Privacy** | ✅ Open source, no telemetry. Audio sent to Groq API — [zero data retention, ephemeral processing](https://groq.com/privacy-policy/) | ❌ Data sent to Google | ❌ Data sent to Microsoft |
 | **Works in Any App** | ✅ System-wide keyboard | ❌ Browser/limited apps only | ❌ Windows apps only |
 
 **Key differences under the hood:**
