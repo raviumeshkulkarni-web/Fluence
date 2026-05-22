@@ -31,6 +31,13 @@ It's powered by **OpenAI Whisper Large v3** running on Groq's ultra-fast inferen
 | **Privacy** | ✅ Open source, no telemetry | ❌ Data sent to Google | ❌ Data sent to Microsoft |
 | **Works in Any App** | ✅ System-wide keyboard | ❌ Browser/limited apps only | ❌ Windows apps only |
 
+**Key differences under the hood:**
+
+- 🧠 **Contextual understanding, not guessing** — Whisper processes entire phrases before outputting text, so punctuation (commas, periods, question marks) is inserted automatically based on sentence tone. Google and Windows dictate word-by-word and regularly mis-pick homophones like *"their" vs. "there"* because they never see the full sentence.
+- 🗣️ **Accent & jargon ready out of the box** — Trained on 680,000 hours of multilingual audio, Whisper handles technical jargon, medical terms, slang, and diverse global accents with zero prior "training" on your voice. Windows Dictation and Google Gboard frequently stumble on proper nouns and alphanumeric combos.
+- ⚠️ **The one honest trade-off — hallucinations** — Because Whisper predicts meaning, long silences or ambient noise can occasionally cause it to insert phantom phrases (e.g., *"Thanks for watching"*). Google and Windows simply pause when you stop speaking, making them slightly more reliable for stop-and-start dictation.
+- ⏱️ **Short phrase delay for cleaner output** — Whisper waits for you to finish a phrase (~0.5–2 s) before committing text, ensuring grammar and punctuation are clean. Windows Dictation feels instant but outputs raw, unpunctuated text that you have to fix manually.
+
 > **Bottom line:** You get near-human transcription accuracy system-wide, in any text field, on any Android app — with full privacy.
 
 ---
