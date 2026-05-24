@@ -49,6 +49,12 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.pointer.PointerInputChange
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.graphics.Paint
+import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
+import androidx.compose.ui.graphics.nativeCanvas
+import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -76,8 +82,6 @@ fun IMEScreen(
     onStopRecording: () -> Unit,
     onSwitchKeyboard: () -> Unit
 ) {
-    val context = LocalContext.current
-    val amplitude by audioRecorder.amplitude.collectAsState()
 
     // Recording duration timer
     var recordTimeSeconds by remember { mutableStateOf(0) }
@@ -127,21 +131,21 @@ fun IMEScreen(
 
     // Color definitions from Stitch designs
     val micBgColor = when (recordingState) {
-        RecordingState.RECORDING -> Color(0xFF00DBE9) // Active Cyan
+        RecordingState.RECORDING -> Color(0xFFA855F7) // Amethyst Violet
         RecordingState.TRANSCRIBING -> Color(0xFF1E1F23) // Dark Grey
         RecordingState.ERROR -> Color(0xFFFF5252) // Error Red
         RecordingState.IDLE -> if (isEnabled) Color(0xFFE3E2E7) else Color(0xFF474649)
     }
 
     val micIconColor = when (recordingState) {
-        RecordingState.RECORDING -> Color(0xFF002022) // Dark text
+        RecordingState.RECORDING -> Color(0xFF1B1B21) // Dark Amethyst Contrast
         RecordingState.TRANSCRIBING -> Color.White
         RecordingState.ERROR -> Color.White
         RecordingState.IDLE -> Color(0xFF121317)
     }
 
     val statusTextColor = when (recordingState) {
-        RecordingState.RECORDING -> Color(0xFF00DBE9) // Active Cyan
+        RecordingState.RECORDING -> Color(0xFFA855F7) // Amethyst Violet
         RecordingState.TRANSCRIBING -> Color(0xFFD18CFF)
         RecordingState.ERROR -> Color(0xFFFF5252)
         RecordingState.IDLE -> Color(0xFFE3E2E7)
@@ -153,6 +157,9 @@ fun IMEScreen(
         RecordingState.TRANSCRIBING -> "Transcribing..."
         RecordingState.ERROR -> errorMessage ?: "ERROR"
     }
+
+    // Glass Pill Dynamic Styling Colors
+    val pillBgColor = if (recordingState == RecordingState.RECORDING) Color(0xB2131319) else Color(0x80131319)
 
     val localOnBackspace by rememberUpdatedState(onBackspace)
     val localOnBackspaceSelect by rememberUpdatedState(onBackspaceSelect)
@@ -181,17 +188,46 @@ fun IMEScreen(
             Spacer(modifier = Modifier.height(10.dp))
         }
 
+        val glowPaint = remember {
+            android.graphics.Paint().apply {
+                this.style = android.graphics.Paint.Style.STROKE
+            }
+        }
+        val density = androidx.compose.ui.platform.LocalDensity.current
+        val glowRadiusPx = with(density) { 8.dp.toPx() }
+        val glowMaskFilter = remember(glowRadiusPx) {
+            android.graphics.BlurMaskFilter(glowRadiusPx, android.graphics.BlurMaskFilter.Blur.NORMAL)
+        }
+
         // Centered Glass Pill Bar
         Row(
             modifier = Modifier
                 .size(width = 240.dp, height = 64.dp)
+                .drawBehind {
+                    val isListening = recordingState == RecordingState.RECORDING
+                    val glowColor = Color(0xFFA855F7).copy(alpha = if (isListening) 0.65f else 0.45f)
+                    val shapeRadiusPx = 32.dp.toPx()
+
+                    drawIntoCanvas { canvas ->
+                        glowPaint.color = glowColor.toArgb()
+                        glowPaint.strokeWidth = 2.dp.toPx() + glowRadiusPx * 0.4f
+                        glowPaint.maskFilter = glowMaskFilter
+                        val rect = android.graphics.RectF(0f, 0f, size.width, size.height)
+                        canvas.nativeCanvas.drawRoundRect(rect, shapeRadiusPx, shapeRadiusPx, glowPaint)
+                    }
+                }
                 .background(
-                    color = Color(0xBF1E1F23), // rgba(30, 31, 35, 0.75)
+                    color = pillBgColor,
                     shape = RoundedCornerShape(32.dp)
                 )
                 .border(
-                    width = 1.dp,
-                    color = Color(0x13FFFFFF), // rgba(255, 255, 255, 0.08)
+                    width = 1.2.dp,
+                    brush = Brush.linearGradient(
+                        colors = listOf(
+                            Color(0xFFA855F7),
+                            Color(0xFF6366F1).copy(alpha = 0.5f)
+                        )
+                    ),
                     shape = RoundedCornerShape(32.dp)
                 )
                 .padding(horizontal = 8.dp),
@@ -247,7 +283,7 @@ fun IMEScreen(
                             .scale(pingScale)
                     ) {
                         drawCircle(
-                            color = Color(0xFF00DBE9).copy(alpha = pingAlpha),
+                            color = Color(0xFFA855F7).copy(alpha = pingAlpha),
                             radius = size.minDimension / 2,
                             style = Stroke(width = 1.5.dp.toPx())
                         )
