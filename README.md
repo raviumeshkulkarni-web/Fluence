@@ -2,13 +2,13 @@
 
 ### *Crystallize your cognition at the speed of thought*
 
-**AI-powered voice typing system-wide on Android, right at your cursor.**
-
 [![Build Android APK](https://github.com/raviumeshkulkarni-web/Fluence/actions/workflows/build.yml/badge.svg)](https://github.com/raviumeshkulkarni-web/Fluence/actions/workflows/build.yml)
 [![GitHub Release](https://img.shields.io/github/v/release/raviumeshkulkarni-web/Fluence?color=blue)](https://github.com/raviumeshkulkarni-web/Fluence/releases)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![Platform](https://img.shields.io/badge/Platform-Android%20API%2026%2B-brightgreen.svg)](https://developer.android.com)
 [![Kotlin](https://img.shields.io/badge/Kotlin-1.9.23-orange.svg)](https://kotlinlang.org)
+
+**AI-powered voice typing system-wide on Android, right at your cursor.**
 
 Fluence is a lightweight, premium, and privacy-focused Android voice typing system powered by the ultra-fast **Groq Whisper API (`whisper-large-v3`)**. Instead of forcing you to use a custom software keyboard, Fluence overlays a smart, WisprFlow-style floating bubble that automatically appears next to any text field when you focus it—whether you're browsing the web in **Brave/Chrome** or typing a message in a native messaging app.
 
