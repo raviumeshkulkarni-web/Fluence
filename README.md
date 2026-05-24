@@ -1,5 +1,7 @@
 # Fluence 🎙️✨
 
+### *Crystallize your thoughts at the speed of light*
+
 **AI-powered voice typing system-wide on Android, right at your cursor.**
 
 [![Build Android APK](https://github.com/raviumeshkulkarni-web/Fluence/actions/workflows/build.yml/badge.svg)](https://github.com/raviumeshkulkarni-web/Fluence/actions/workflows/build.yml)
