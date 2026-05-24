@@ -14,19 +14,10 @@ Fluence is a lightweight, premium, and privacy-focused Android voice typing syst
 
 ---
 
-## 🎬 Watch It In Action
-
-<p align="center">
-  <video src="docs/assets/fluence_demo.mp4" width="320" autoplay loop muted playsinline></video>
-</p>
-
----
-
-## 📸 Visual Showcase
-
-| 1. Focused Text Box (Listening State) | 2. Active Dictation & Recording | 3. Premium Setup Wizard |
-| :---: | :---: | :---: |
-| <img src="docs/assets/bubble_listening.png" width="220px" alt="Bubble Listening" /> <br> *Subtle floating bubble active* | <img src="docs/assets/bubble_waveform.png" width="220px" alt="Bubble Recording" /> <br> *Real-time visual waveform feedback* | <img src="docs/assets/setup_wizard.png" width="220px" alt="Setup Onboarding" /> <br> *Permissions status & configuration* |
+## 🎬 Visual Showcase
+| 1. Watch It In Action | 2. Focused Text Box (Listening State) | 3. Active Dictation & Recording | 4. Premium Setup Wizard |
+| :---: | :---: | :---: | :---: |
+| <video src="https://github.com/user-attachments/assets/19a09852-70a6-434b-9776-315376f025bb" width="220px" controls></video> <br> *Full app demo* | <img src="docs/assets/bubble_listening.png" width="220px" alt="Bubble Listening" /> <br> *Subtle floating bubble active* | <img src="docs/assets/bubble_waveform.png" width="220px" alt="Bubble Recording" /> <br> *Real-time visual waveform feedback* | <img src="docs/assets/setup_wizard.png" width="220px" alt="Setup Onboarding" /> <br> *Permissions status & configuration* |
 
 ---
 
