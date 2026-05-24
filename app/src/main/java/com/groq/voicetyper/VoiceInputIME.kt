@@ -102,7 +102,9 @@ class VoiceInputIME : InputMethodService(), LifecycleOwner, ViewModelStoreOwner,
 
     override fun onCreateInputView(): View {
         Log.d(TAG, "onCreateInputView: Creating Compose input view")
-        composeView = ComposeView(this)
+        composeView = ComposeView(this).apply {
+            setLayerType(android.view.View.LAYER_TYPE_SOFTWARE, null)
+        }
 
         // Set the window background to transparent so the app behind is visible around the floating pill
         window?.window?.let { win ->

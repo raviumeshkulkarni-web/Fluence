@@ -73,163 +73,168 @@ fun FloatingBubbleUI(
     val shape = RoundedCornerShape(cornerRadius)
 
     Box(
-        modifier = Modifier
-            .size(width = width, height = height)
-            .amethystObsidianGlow(isExpanded = isExpanded, shape = shape)
-            // Gesture handling for Collapsed state (drag, tap, hold)
-            .run {
-                if (!isExpanded) {
-                    this.pointerInput(isExpanded) {
-                        awaitPointerEventScope {
-                            while (true) {
-                                val down = awaitFirstDown()
-                                val startPos = down.position
-                                val startTime = System.currentTimeMillis()
-                                var isDragging = false
-                                var isRecordingStarted = false
-                                var holdTriggered = false
+        modifier = Modifier.padding(16.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Box(
+            modifier = Modifier
+                .size(width = width, height = height)
+                .amethystObsidianGlow(isExpanded = isExpanded, shape = shape)
+                // Gesture handling for Collapsed state (drag, tap, hold)
+                .run {
+                    if (!isExpanded) {
+                        this.pointerInput(isExpanded) {
+                            awaitPointerEventScope {
+                                while (true) {
+                                    val down = awaitFirstDown()
+                                    val startPos = down.position
+                                    val startTime = System.currentTimeMillis()
+                                    var isDragging = false
+                                    var isRecordingStarted = false
+                                    var holdTriggered = false
 
-                                do {
-                                    val event = awaitPointerEvent()
-                                    val change = event.changes.firstOrNull() ?: continue
+                                    do {
+                                        val event = awaitPointerEvent()
+                                        val change = event.changes.firstOrNull() ?: continue
 
-                                    if (change.pressed) {
-                                        val currentPos = change.position
-                                        val dragDistance = (currentPos - startPos).getDistance()
+                                        if (change.pressed) {
+                                            val currentPos = change.position
+                                            val dragDistance = (currentPos - startPos).getDistance()
 
-                                        if (dragDistance > 8.dp.toPx() && !isRecordingStarted) {
-                                            isDragging = true
-                                        }
-
-                                        if (isDragging) {
-                                            val dx = change.position.x - change.previousPosition.x
-                                            val dy = change.position.y - change.previousPosition.y
-                                            onDrag(dx, dy)
-                                        } else {
-                                            val elapsed = System.currentTimeMillis() - startTime
-                                            if (elapsed > 400 && !holdTriggered) {
-                                                holdTriggered = true
-                                                isRecordingStarted = true
-                                                BubbleController.startRecording(context)
+                                            if (dragDistance > 8.dp.toPx() && !isRecordingStarted) {
+                                                isDragging = true
                                             }
-                                        }
-                                        change.consume()
-                                    } else {
-                                        break
-                                    }
-                                } while (true)
 
-                                if (isDragging) {
-                                    onDragReleased()
-                                } else {
-                                    val elapsed = System.currentTimeMillis() - startTime
-                                    if (holdTriggered) {
-                                        BubbleController.stopRecording(context)
-                                    } else if (elapsed < 400) {
-                                        BubbleController.startRecording(context)
+                                            if (isDragging) {
+                                                val dx = change.position.x - change.previousPosition.x
+                                                val dy = change.position.y - change.previousPosition.y
+                                                onDrag(dx, dy)
+                                            } else {
+                                                val elapsed = System.currentTimeMillis() - startTime
+                                                if (elapsed > 400 && !holdTriggered) {
+                                                    holdTriggered = true
+                                                    isRecordingStarted = true
+                                                    BubbleController.startRecording(context)
+                                                }
+                                            }
+                                            change.consume()
+                                        } else {
+                                            break
+                                        }
+                                    } while (true)
+
+                                    if (isDragging) {
+                                        onDragReleased()
+                                    } else {
+                                        val elapsed = System.currentTimeMillis() - startTime
+                                        if (holdTriggered) {
+                                            BubbleController.stopRecording(context)
+                                        } else if (elapsed < 400) {
+                                            BubbleController.startRecording(context)
+                                        }
                                     }
                                 }
                             }
                         }
-                    }
-                } else this
-            },
-        contentAlignment = Alignment.Center
-    ) {
-        if (!isExpanded) {
-            MiniFluenceOrb()
-        } else {
-            Row(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(horizontal = 8.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                // 1. Cancel Button (Left)
-                IconButton(
-                    onClick = { BubbleController.cancelRecording() },
+                    } else this
+                },
+            contentAlignment = Alignment.Center
+        ) {
+            if (!isExpanded) {
+                MiniFluenceOrb()
+            } else {
+                Row(
                     modifier = Modifier
-                        .size(44.dp)
-                        .background(Color(0x1AFFFFFF), CircleShape)
+                        .fillMaxSize()
+                        .padding(horizontal = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    Canvas(modifier = Modifier.size(14.dp)) {
-                        val w = size.width
-                        val h = size.height
-                        drawLine(
-                            color = Color.White,
-                            start = Offset(0f, 0f),
-                            end = Offset(w, h),
-                            strokeWidth = 2.dp.toPx(),
-                            cap = StrokeCap.Round
-                        )
-                        drawLine(
-                            color = Color.White,
-                            start = Offset(w, 0f),
-                            end = Offset(0f, h),
-                            strokeWidth = 2.dp.toPx(),
-                            cap = StrokeCap.Round
-                        )
-                    }
-                }
-
-                // 2. Siri Waveform Pill (Center)
-                Box(
-                    modifier = Modifier
-                        .weight(1f)
-                        .height(48.dp)
-                        .padding(horizontal = 8.dp)
-                        .clip(RoundedCornerShape(24.dp))
-                        .background(Color(0x0CFFFFFF))
-                        .border(1.dp, Color(0x0DFFFFFF), RoundedCornerShape(24.dp))
-                        .clickable {
-                            if (recordingState == RecordingState.RECORDING) {
-                                BubbleController.stopRecording(context)
-                            }
-                        },
-                    contentAlignment = Alignment.Center
-                ) {
-                    if (recordingState == RecordingState.TRANSCRIBING) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(20.dp),
-                            color = Color.White,
-                            strokeWidth = 2.dp
-                        )
-                    } else if (recordingState == RecordingState.ERROR) {
-                        Text(
-                            text = errorMessage ?: "Error",
-                            color = Color(0xFFFF5252),
-                            fontSize = 10.sp,
-                            fontWeight = FontWeight.Bold,
-                            textAlign = TextAlign.Center,
-                            maxLines = 1,
-                            modifier = Modifier.padding(horizontal = 4.dp)
-                        )
-                    } else {
-                        SiriWaveform(amplitude = amplitude)
-                    }
-                }
-
-                // 3. Confirm Button (Right)
-                IconButton(
-                    onClick = { BubbleController.stopRecording(context) },
-                    modifier = Modifier
-                        .size(44.dp)
-                        .background(Color(0xFFA855F7), CircleShape)
-                ) {
-                    Canvas(modifier = Modifier.size(16.dp)) {
-                        val w = size.width
-                        val h = size.height
-                        val path = Path().apply {
-                            moveTo(w * 0.2f, h * 0.5f)
-                            lineTo(w * 0.45f, h * 0.75f)
-                            lineTo(w * 0.85f, h * 0.25f)
+                    // 1. Cancel Button (Left)
+                    IconButton(
+                        onClick = { BubbleController.cancelRecording() },
+                        modifier = Modifier
+                            .size(44.dp)
+                            .background(Color(0x1AFFFFFF), CircleShape)
+                    ) {
+                        Canvas(modifier = Modifier.size(14.dp)) {
+                            val w = size.width
+                            val h = size.height
+                            drawLine(
+                                color = Color.White,
+                                start = Offset(0f, 0f),
+                                end = Offset(w, h),
+                                strokeWidth = 2.dp.toPx(),
+                                cap = StrokeCap.Round
+                            )
+                            drawLine(
+                                color = Color.White,
+                                start = Offset(w, 0f),
+                                end = Offset(0f, h),
+                                strokeWidth = 2.dp.toPx(),
+                                cap = StrokeCap.Round
+                            )
                         }
-                        drawPath(
-                            path = path,
-                            color = Color.White,
-                            style = Stroke(width = 2.5.dp.toPx(), cap = StrokeCap.Round, join = StrokeJoin.Round)
-                        )
+                    }
+
+                    // 2. Siri Waveform Pill (Center)
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(48.dp)
+                            .padding(horizontal = 8.dp)
+                            .clip(RoundedCornerShape(24.dp))
+                            .background(Color(0x0CFFFFFF))
+                            .border(1.dp, Color(0x0DFFFFFF), RoundedCornerShape(24.dp))
+                            .clickable {
+                                if (recordingState == RecordingState.RECORDING) {
+                                    BubbleController.stopRecording(context)
+                                }
+                            },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        if (recordingState == RecordingState.TRANSCRIBING) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(20.dp),
+                                color = Color.White,
+                                strokeWidth = 2.dp
+                            )
+                        } else if (recordingState == RecordingState.ERROR) {
+                            Text(
+                                text = errorMessage ?: "Error",
+                                color = Color(0xFFFF5252),
+                                fontSize = 10.sp,
+                                fontWeight = FontWeight.Bold,
+                                textAlign = TextAlign.Center,
+                                maxLines = 1,
+                                modifier = Modifier.padding(horizontal = 4.dp)
+                            )
+                        } else {
+                            SiriWaveform(amplitude = amplitude)
+                        }
+                    }
+
+                    // 3. Confirm Button (Right)
+                    IconButton(
+                        onClick = { BubbleController.stopRecording(context) },
+                        modifier = Modifier
+                            .size(44.dp)
+                            .background(Color(0xFFA855F7), CircleShape)
+                    ) {
+                        Canvas(modifier = Modifier.size(16.dp)) {
+                            val w = size.width
+                            val h = size.height
+                            val path = Path().apply {
+                                moveTo(w * 0.2f, h * 0.5f)
+                                lineTo(w * 0.45f, h * 0.75f)
+                                lineTo(w * 0.85f, h * 0.25f)
+                            }
+                            drawPath(
+                                path = path,
+                                color = Color.White,
+                                style = Stroke(width = 2.5.dp.toPx(), cap = StrokeCap.Round, join = StrokeJoin.Round)
+                            )
+                        }
                     }
                 }
             }

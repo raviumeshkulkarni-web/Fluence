@@ -201,9 +201,9 @@ object BubbleController {
             Log.w(TAG, "Node refresh returned false — attempting injection anyway")
         }
 
-        val currentText = node.text ?: ""
-        val selectionStart = node.textSelectionStart
-        val selectionEnd = node.textSelectionEnd
+        val currentText = if (node.isShowingHintText) "" else (node.text ?: "")
+        val selectionStart = if (node.isShowingHintText) 0 else node.textSelectionStart
+        val selectionEnd = if (node.isShowingHintText) 0 else node.textSelectionEnd
         val textToInsert = "${text.trim()} "
 
         val bundle = Bundle()
@@ -242,6 +242,10 @@ object BubbleController {
     fun performBackspace() {
         val node = synchronized(nodeLock) { activeNode } ?: return
         try { node.refresh() } catch (_: Exception) {}
+
+        if (node.isShowingHintText) {
+            return
+        }
 
         val currentText = node.text ?: ""
         val selectionStart = node.textSelectionStart

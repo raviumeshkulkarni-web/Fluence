@@ -113,6 +113,7 @@ class FloatingBubbleService : Service(), LifecycleOwner, ViewModelStoreOwner, Sa
         if (isViewAdded) return
 
         val density = resources.displayMetrics.density
+        val padding = (16 * density).toInt()
         val collapsedSize = (56 * density).toInt()
         val expandedWidth = (240 * density).toInt()
 
@@ -125,11 +126,12 @@ class FloatingBubbleService : Service(), LifecycleOwner, ViewModelStoreOwner, Sa
             width = WindowManager.LayoutParams.WRAP_CONTENT
             height = WindowManager.LayoutParams.WRAP_CONTENT
             gravity = Gravity.TOP or Gravity.START
-            x = 0
-            y = resources.displayMetrics.heightPixels / 3
+            x = -padding
+            y = resources.displayMetrics.heightPixels / 3 - padding
         }
 
         val view = ComposeView(this).apply {
+            setLayerType(android.view.View.LAYER_TYPE_SOFTWARE, null)
             setViewTreeLifecycleOwner(this@FloatingBubbleService)
             setViewTreeViewModelStoreOwner(this@FloatingBubbleService)
             setViewTreeSavedStateRegistryOwner(this@FloatingBubbleService)
@@ -140,8 +142,8 @@ class FloatingBubbleService : Service(), LifecycleOwner, ViewModelStoreOwner, Sa
                         val screenWidth = resources.displayMetrics.widthPixels
                         val screenHeight = resources.displayMetrics.heightPixels
                         val lp = this@FloatingBubbleService.layoutParams
-                        lp.x = (lp.x + dx.toInt()).coerceIn(0, screenWidth - collapsedSize)
-                        lp.y = (lp.y + dy.toInt()).coerceIn(0, screenHeight - collapsedSize)
+                        lp.x = (lp.x + dx.toInt()).coerceIn(-padding, screenWidth - collapsedSize - padding)
+                        lp.y = (lp.y + dy.toInt()).coerceIn(-padding, screenHeight - collapsedSize - padding)
                         if (isViewAdded && composeView != null && composeView!!.isAttachedToWindow) {
                             windowManager.updateViewLayout(composeView, lp)
                         }
@@ -149,16 +151,16 @@ class FloatingBubbleService : Service(), LifecycleOwner, ViewModelStoreOwner, Sa
                     onDragReleased = {
                         val screenWidth = resources.displayMetrics.widthPixels
                         val lp = this@FloatingBubbleService.layoutParams
-                        val isLeft = lp.x + collapsedSize / 2 < screenWidth / 2
-                        val targetX = if (isLeft) 0 else screenWidth - collapsedSize
+                        val isLeft = (lp.x + padding) + collapsedSize / 2 < screenWidth / 2
+                        val targetX = if (isLeft) -padding else screenWidth - collapsedSize - padding
                         animateSnap(targetX)
                     },
                     onExpandChanged = { expanded ->
                         val screenWidth = resources.displayMetrics.widthPixels
                         val lp = this@FloatingBubbleService.layoutParams
-                        val isRightSide = lp.x + collapsedSize / 2 > screenWidth / 2
+                        val isRightSide = (lp.x + padding) + collapsedSize / 2 > screenWidth / 2
                         if (isRightSide) {
-                            val targetX = if (expanded) screenWidth - expandedWidth else screenWidth - collapsedSize
+                            val targetX = if (expanded) screenWidth - expandedWidth - padding else screenWidth - collapsedSize - padding
                             animateSnap(targetX)
                         }
                     }
