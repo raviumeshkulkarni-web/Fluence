@@ -1,4 +1,6 @@
-# AI Voice Typer for Android 🎙️🚀
+# Fluence 🎙️✨
+
+**AI-powered voice typing system-wide on Android, right at your cursor.**
 
 [![Build Android APK](https://github.com/raviumeshkulkarni-web/AI-Voice-typer/actions/workflows/build.yml/badge.svg)](https://github.com/raviumeshkulkarni-web/AI-Voice-typer/actions/workflows/build.yml)
 [![GitHub Release](https://img.shields.io/github/v/release/raviumeshkulkarni-web/AI-Voice-typer?color=blue)](https://github.com/raviumeshkulkarni-web/AI-Voice-typer/releases)
@@ -6,182 +8,141 @@
 [![Platform](https://img.shields.io/badge/Platform-Android%20API%2026%2B-brightgreen.svg)](https://developer.android.com)
 [![Kotlin](https://img.shields.io/badge/Kotlin-1.9.23-orange.svg)](https://kotlinlang.org)
 
-AI Voice Typer is a lightweight, modern, and privacy-focused Android Voice Keyboard (IME) powered by the ultra-fast **Groq Whisper API**. It lets you dictate directly into any application's text fields at blistering speeds.
+Fluence is a lightweight, premium, and privacy-focused Android voice typing system powered by the ultra-fast **Groq Whisper API (`whisper-large-v3`)**. Instead of forcing you to use a custom software keyboard, Fluence overlays a smart, WisprFlow-style floating bubble that automatically appears next to any text field when you focus it—whether you're browsing the web in **Brave/Chrome** or typing a message in a native messaging app.
+
+---
+
+## 🎬 Watch It In Action
 
 <p align="center">
-  <img src="docs/assets/setup_screenshot.png" width="30%" alt="Setup Screen Mockup" />
-  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-  <img src="docs/assets/keyboard_screenshot.png" width="30%" alt="Keyboard Mockup" />
+  <!-- Replace this with your screen recording GIF or MP4 video (GitHub supports MP4 uploads!) -->
+  <img src="docs/assets/fluence_demo.gif" width="320px" alt="Fluence Demo" />
 </p>
 
 ---
 
-## 🏆 Why AI Voice Typer and problem we are solving? 
+## 📸 Visual Showcase
 
-**The Problem of cognitive bottleneck:** 
-Standard dictation tools are
-- Rigid and they stumble over jargon, ignore context, botch punctuation, and force tedious manual editing.
-- Typing complex thoughts at 40 WPM kills your flow.
-- Most of the tools are closed source and the code is not auditable so you don't know what is happening in the black box with your private data.
-
-**The Solution:** 
-AI Voice Typer captures your voice and transforms it into polished, production-ready text in real time. Context-aware transcription (92–97.9% accuracy) automatically punctuates, handles technical vocabulary, and works system-wide across any app. Dictate at the speed of thought without the friction. 🚀
-Most voice typing tools compromise between accuracy, privacy, and speed. **AI Voice Typer doesn't.**
-
-It's powered by **OpenAI Whisper Large v3** running on Groq's ultra-fast inference hardware, delivering accuracy that beats every built-in dictation tool available today, without any background telemetry or data collection.
-
-| Metric / Feature | **AI Voice Typer** (Whisper v3 on Groq) | Google Speech-to-Text | Windows Dictation (Win + H) |
-|---|---|---|---|
-| **Average Accuracy** | 92% – 97.9% | 79% – 88% | 85% – 92% |
-| **Word Error Rate (WER)** | ~2.7% *(clean audio)* | ~11.6% – 16.5% | ~10% – 15% |
-| **Processing Style** | Contextual Batch *(phrases)* | Streaming *(word-by-word)* | Streaming *(word-by-word)* |
-| **Background Noise Handling** | ✅ Excellent *(trained on raw audio)* | 🟡 Good *(cloud filtering)* | 🔴 Average *(struggles with cross-talk)* |
-| **Privacy** | ✅ Open source, no telemetry. Audio sent to Groq API with [zero data retention, ephemeral processing](https://groq.com/privacy-policy/) | ❌ Data sent to Google | ❌ Data sent to Microsoft |
-| **Works in Any App** | ✅ System-wide keyboard | ❌ Browser/limited apps only | ❌ Windows apps only |
-
-**Key differences under the hood:**
-
-- 🧠 **Contextual understanding, not guessing**: Whisper processes entire phrases before outputting text, so punctuation (commas, periods, question marks) is inserted automatically based on sentence tone. Google and Windows dictate word-by-word and regularly mis-pick homophones like *"their" vs. "there"* because they never see the full sentence.
-- 🗣️ **Accent & jargon ready out of the box**: Trained on 680,000 hours of multilingual audio, Whisper handles technical jargon, medical terms, slang, and diverse global accents with zero prior "training" on your voice. Windows Dictation and Google Gboard frequently stumble on proper nouns and alphanumeric combos.
-- ⏱️ **Short phrase delay for cleaner output**: Whisper waits for you to finish a phrase (~0.5–2 s) before committing text, ensuring grammar and punctuation are clean. Windows Dictation feels instant but outputs raw, unpunctuated text that you have to fix manually.
-
-> **Bottom line:** You get near-human transcription accuracy system-wide, in any text field, on any Android app, with full privacy.
+| 1. Focused Text Box (Listening State) | 2. Active Dictation & Recording | 3. Premium Setup Wizard |
+| :---: | :---: | :---: |
+| <img src="docs/assets/bubble_listening.png" width="220px" alt="Bubble Listening" /> <br> *Subtle floating bubble active* | <img src="docs/assets/bubble_waveform.png" width="220px" alt="Bubble Recording" /> <br> *Real-time visual waveform feedback* | <img src="docs/assets/setup_wizard.png" width="220px" alt="Setup Onboarding" /> <br> *Permissions status & configuration* |
 
 ---
 
-## 🔒 The Privacy-First Approach
+## 🏆 The Problem & Solution
 
-**Built for users who love and demand absolute privacy.** 
+**The Dictation Bottleneck:**
+Traditional dictation systems are either slow, unpunctuated, or restricted to a specific custom keyboard. Google's streaming STT dictates word-by-word and frequently gets homophones wrong because it lacks contextual sentence-level comprehension. Furthermore, closed-source keyboards pose a massive telemetry and data privacy risk.
 
-Unlike conventional voice typing tools and keyboards, **Groq Voice Typer does not collect, store, or transmit any user data, telemetry, or typing behavior.** We believe in building instant user trust through complete transparency:
+**The Fluence Solution:**
+Fluence waits for you to finish your sentence/phrase, transcribes it using **OpenAI's Whisper Large v3** model on Groq's LPU inference hardware in less than a second, and automatically injects fully-punctuated, context-aware text directly at your cursor.
 
-* **100% Open Source:** The entire codebase is open and inspectable. What you see here is exactly what gets compiled and runs on your device.
-* **No Telemetry or Tracking:** Zero analytics scripts, tracking code, or background usage logging.
-* **Direct HTTPS Communication:** Your recorded audio goes directly from your device to the official Groq API servers via HTTPS (TLS 1.3). No intermediate custom servers or proxies are involved.
-* **Local Encryption at Rest:** Your Groq API Key is encrypted using Android Keystore-backed cryptography (`EncryptedSharedPreferences`).
-* **Zero Audio File Footprint:** Audio files are stored temporarily in private internal cache space and are explicitly deleted the millisecond a transcription finishes or fails.
-
----
-
-## Key Features
-
-* **High-Speed Transcription:** Direct integration with Groq's `whisper-large-v3` API for near-instant, high-accuracy English speech-to-text.
-* **Privacy & Security First:**
-  * **Encryption at Rest:** Your Groq API Key is encrypted locally using Android's hardware-backed Keystore system (`EncryptedSharedPreferences`).
-  * **No Telemetry:** Zero third-party analytics, tracking, or telemetry libraries.
-  * **Direct Calls:** App communicates strictly with the official Groq API endpoint (`https://api.groq.com`).
-  * **Ephemeral Storage:** Audio files are stored temporarily in the internal cache directory and explicitly deleted immediately after transcription finishes.
-* **Premium User Interface:**
-  * Beautiful dark-mode interface built using **Jetpack Compose**.
-  * Dynamic, canvas-drawn live audio waveform visualization.
-  * Easy-to-use setup wizard to configure permissions and keyboard settings.
-* **Smart Input Interactions:**
-  * Supports both **Tap-to-speak** (toggles start/stop) and **Hold-to-speak** (release to transcribe) gestures.
-  * Includes quick Spacebar, Enter, Backspace, and IME Switch keys.
+| Feature | **Fluence** (Groq Whisper v3) | Google Speech-to-Text |
+| :--- | :---: | :---: |
+| **Accuracy** | **92% – 97.9%** (Human level) | 79% – 88% |
+| **Punctuation** | **Automatic & Intelligent** | Rigid / Word-by-word |
+| **Privacy** | **Open Source (Zero Telemetry)** | Closed Source (Data collected) |
+| **System-wide Overlay** | **Yes (Floating WisprFlow Bubble)** | No (Restricted to keyboard) |
+| **Accent & Jargon Handling** | **Excellent (680k hr dataset)** | Average (Often stumbles) |
 
 ---
 
-## Technical Architecture
+## 🔒 Privacy & Local Security
 
-The following sequence diagram outlines the end-to-end data flow when voice typing:
+Built for users who refuse to compromise on data security:
+* **Zero Telemetry or Logs:** No tracking code, analytics scripts, or background logging.
+* **Android Keystore Encryption:** Your Groq API Key is encrypted locally using hardware-backed cryptography via `EncryptedSharedPreferences`.
+* **Direct HTTPS Transmission:** Audio is sent directly from your device to the official Groq API endpoint (`https://api.groq.com`). No middleman, no intermediate servers.
+* **Ephemeral Storage:** The captured audio snippet is temporarily saved in your app's private cache and **deleted immediately** the millisecond the transcription succeeds or fails.
+
+---
+
+## 🛠️ Core Features
+
+* **WisprFlow-Style Floating Bubble:** A sleek, glassmorphic bubble overlay that follows your focus. Tap to speak, or hold to talk and release to instantly transcribe.
+* **Multi-Window Focus Engine:** Custom Accessibility Service checks active native app windows and nested WebViews (like Brave and Chrome) to ensure the bubble appears next to any editable input.
+* **Ultra-Low Latency:** Transcribes sentences in under `0.5s–1s` via Groq LPU API.
+* **Intelligent Text Injection:** Fallback mechanics inject text at the current cursor position, falling back to appending if standard cursor focus is blocked.
+* **Battery-Optimized:** Zero background drainage; the service remains completely idle until a text window focus event is captured.
+
+---
+
+## 📐 Architecture & Flow
 
 ```mermaid
 sequenceDiagram
     autonumber
     actor User
-    participant IME as IMEScreen (UI)
-    participant Service as VoiceInputIME
-    participant Recorder as AudioRecorder
-    participant API as GroqClient
-
-    User->>IME: Tap / Hold Voice Button
-    IME->>Service: onStartRecording()
-    Service->>Recorder: startRecording()
-    Note over Recorder: Captures MIC audio &<br/>polls amplitudes for waveform
-
-    Recorder-->>IME: Stream Amplitudes (StateFlow)
-    Note over IME: Draw real-time dynamic waveform
-
-    User->>IME: Release / Tap Voice Button again
-    IME->>Service: onStopRecording()
-    Service->>Recorder: stopRecording()
-    Recorder-->>Service: Return audio cache File (.m4a)
-    Service->>IME: Update state to TRANSCRIBING
-
-    Service->>API: transcribe(audioFile)
-    Note over API: Send Multipart POST request<br/>to Groq Whisper API
-    API-->>Service: Return JSON Transcription Result
-    Note over API: Clean up audio cache File
-
-    alt Success
-        Service->>Service: Commit text to current input field
-        Service->>IME: Update state to IDLE
-    else Failure
-        Service->>IME: Show Error Message (e.g. rate limit, api key issue)
-        Note over IME: Reset back to IDLE after 4s
-    end
+    participant App as Active App / WebView
+    participant Service as FluenceAccessibilityService
+    participant Overlay as BubbleController (UI)
+    participant API as Groq Client
+    
+    App->>Service: Focus Text Field / Cursor Event
+    Note over Service: Scans active windows & WebView hierarchy
+    Service->>Overlay: Show Floating Bubble (Cursor Position)
+    
+    User->>Overlay: Tap / Hold Bubble to Start Dictating
+    Note over Overlay: Record raw audio & capture live amplitude data
+    Overlay-->>User: Render real-time visual waveform
+    
+    User->>Overlay: Tap again / Release Bubble
+    Overlay->>API: Secure HTTPS upload of temporary audio file
+    API-->>Overlay: Return punctuated text JSON
+    Note over Overlay: Delete temporary audio file instantly
+    
+    Overlay->>Service: Request text injection
+    Service->>App: Inject text directly at cursor position
+    Overlay->>Overlay: Return to idle/hidden state
 ```
 
 ---
 
-## How to Install & Build
+## 🚀 Installation & Setup
 
-### Option A: Download the Pre-compiled APK (Recommended)
+### Option A: Download Pre-compiled APK (Recommended)
+1. Head to the [Releases](https://github.com/raviumeshkulkarni-web/AI-Voice-typer/releases) page.
+2. Download `app-release.apk` from the latest release.
+3. Open the downloaded file to install (grant permission to "Install from Unknown Sources" if prompted).
 
-1. Navigate to the [Releases](https://github.com/raviumeshkulkarni-web/AI-Voice-typer/releases) page of this repository.
-2. Download the `app-release.apk` asset from the latest release.
-3. Open the APK on your Android device and install it (you may need to allow installation from "Unknown Sources" or your web browser).
-
-### Option B: Build Locally via Android Studio
-
-1. Clone this repository:
+### Option B: Build from Source
+1. Clone the repository:
    ```bash
    git clone https://github.com/raviumeshkulkarni-web/AI-Voice-typer.git
    ```
-2. Open the project in **Android Studio** (Koala or newer recommended).
-3. Connect your Android device (with USB debugging enabled) or start an Emulator.
-4. Click the **Run** button to build and install the application.
+2. Open the project in **Android Studio** (Koala or newer).
+3. Connect your device (with USB debugging enabled) and click **Run**.
+
+### Onboarding Steps
+1. **Enter Groq API Key**: Paste your key (starts with `gsk_`) from the [Groq Console](https://console.groq.com).
+2. **Microphone Permission**: Allow the app to record your voice.
+3. **Accessibility Service**: Turn on **Fluence** in your system accessibility settings (this allows it to detect when text fields are focused).
+4. **Draw Over Other Apps**: Grant overlay permission so the bubble can float near your cursor.
+5. **Practice Field**: Try out the dictation right inside the configuration screen!
 
 ---
 
-## Setup & Configuration Guide
+## ⚙️ Troubleshooting
 
-After installing the app, follow these simple steps inside the configuration wizard:
+#### 1. The bubble is not appearing in certain text fields
+* Make sure you have enabled the **Fluence Accessibility Service** in settings.
+* Try tapping outside the text field and tapping back in to trigger a fresh focus event.
 
-1. **Paste your Groq API Key** (starts with `gsk_`) and click **Save**. (You can get an API key for free from the [Groq Console](https://console.groq.com)).
-2. **Grant Microphone Permission** so the keyboard can record audio.
-3. **Enable Keyboard Service** in Android System Settings.
-4. **Switch Default Keyboard** to make **Groq Voice Typer** your active input method.
-5. Practice and test typing directly within the app's **Practice Area** text field!
-
----
-
-## 🛠️ Troubleshooting
-
-### 1. The keyboard shows "API Key Required" even though I entered it
-* Make sure you clicked the **Save** button in the main setup screen. The API key is stored securely using cryptography only after you click Save.
-* Try reopening the Setup app to confirm that the screen displays `✓ Key saved securely`.
-
-### 2. The keyboard voice button does not react to taps or holds
-* Verify that you have enabled microphone permissions for Groq Voice Typer in the Setup app or under Android system settings: `Settings > Apps > Groq Voice Typer > Permissions > Microphone > Allow`.
-
-### 3. Transcription fails with a red error message
-* **Rate Limits**: Groq's free tier has rate limits. If you record very frequently, you might temporarily hit rate limits.
-* **Internet Connection**: The app requires an active internet connection to communicate directly and securely with the Groq API.
-* **Invalid API Key**: Ensure there are no trailing spaces or missing characters in your pasted API key.
+#### 2. The app returns a red error when transcribing
+* **Network Status**: Check your internet connection.
+* **Invalid Key**: Verify that your Groq API key is correct and doesn't contain extra spaces.
+* **Rate Limits**: If you record multiple short phrases in quick succession, you may temporarily hit Groq's API rate limits.
 
 ---
 
-## Tech Stack
-
+## 💻 Tech Stack
 * **Language:** Kotlin
 * **UI Toolkit:** Jetpack Compose (Material 3)
-* **Network:** OkHttp
-* **Security:** AndroidX Security Crypto (EncryptedSharedPreferences)
-* **API Engine:** Groq Whisper Speech-to-Text (`whisper-large-v3`)
+* **Network Client:** OkHttp
+* **Local Security:** AndroidX Security Crypto
+* **AI Engine:** Groq Whisper STT API (`whisper-large-v3`)
 
 ---
 
-## License
-
-This project is open-source and available under the [Apache License 2.0](LICENSE).
+## 📄 License
+This project is open-source and licensed under the [Apache License 2.0](LICENSE).
