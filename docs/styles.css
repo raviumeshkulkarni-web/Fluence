@@ -415,7 +415,7 @@ main {
     top: 220px;
     left: 16px;
     right: 16px;
-    height: 60px;
+    height: 48px;
     background: rgba(18, 18, 24, 0.85);
     border: 1px solid var(--primary-amethyst);
     border-radius: 999px;
@@ -423,7 +423,7 @@ main {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 0 8px;
+    padding: 0 6px;
     opacity: 0;
     transform: translateY(20px) scale(0.95);
     pointer-events: none;
@@ -438,8 +438,8 @@ main {
 }
 
 .overlay-close-btn {
-    width: 44px;
-    height: 44px;
+    width: 36px;
+    height: 36px;
     border-radius: 50%;
     background: rgba(255, 255, 255, 0.05);
     border: none;
@@ -449,6 +449,7 @@ main {
     color: var(--text-white);
     cursor: pointer;
     transition: background 0.2s;
+    flex-shrink: 0;
 }
 
 .overlay-close-btn:hover {
@@ -456,8 +457,8 @@ main {
 }
 
 .overlay-close-btn svg {
-    width: 20px;
-    height: 20px;
+    width: 18px;
+    height: 18px;
     fill: currentColor;
 }
 
@@ -485,8 +486,8 @@ main {
 }
 
 .overlay-check-btn {
-    width: 44px;
-    height: 44px;
+    width: 36px;
+    height: 36px;
     border-radius: 50%;
     background: var(--primary-amethyst);
     border: none;
@@ -497,11 +498,12 @@ main {
     cursor: pointer;
     box-shadow: 0 0 15px rgba(168, 85, 247, 0.4);
     transition: transform 0.2s;
+    flex-shrink: 0;
 }
 
 .overlay-check-btn svg {
-    width: 20px;
-    height: 20px;
+    width: 18px;
+    height: 18px;
     fill: currentColor;
 }
 
@@ -510,8 +512,8 @@ main {
     position: absolute;
     left: 20px;
     top: 140px;
-    width: 48px;
-    height: 48px;
+    width: 44px;
+    height: 44px;
     border-radius: 50%;
     background: rgba(18, 18, 25, 0.8);
     border: 2px solid var(--primary-amethyst);
