@@ -40,7 +40,12 @@
                 <div class="logo-text">flu<span>ence</span></div>
             </a>
             <nav class="nav-links">
-                <a href="https://github.com/raviumeshkulkarni-web/Fluence" class="nav-item" id="link-github" target="_blank" rel="noopener">GitHub</a>
+                <a href="https://github.com/raviumeshkulkarni-web/Fluence" class="nav-item github-nav-link" id="link-github" target="_blank" rel="noopener">
+                    <svg class="github-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M12 2C6.477 2 2 6.477 2 12c0 4.42 2.865 8.166 6.839 9.489.5.092.682-.217.682-.482 0-.237-.008-.866-.013-1.7-2.782.603-3.369-1.34-3.369-1.34-.454-1.156-1.11-1.462-1.11-1.462-.908-.62.069-.608.069-.608 1.003.07 1.531 1.03 1.531 1.03.892 1.529 2.341 1.087 2.91.831.092-.646.35-1.086.636-1.336-2.22-.253-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.029-2.683-.103-.253-.446-1.27.098-2.647 0 0 .84-.269 2.75 1.025A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.294 2.747-1.025 2.747-1.025.546 1.377.203 2.394.1 2.647.64.699 1.028 1.592 1.028 2.683 0 3.842-2.339 4.687-4.566 4.935.359.309.678.919.678 1.852 0 1.336-.012 2.415-.012 2.743 0 .267.18.579.688.481C19.137 20.162 22 16.418 22 12c0-5.523-4.477-10-10-10z"/>
+                    </svg>
+                    GitHub
+                </a>
                 <a href="https://github.com/raviumeshkulkarni-web/Fluence/releases" class="btn-nav-download" id="btn-nav-dl">Download APK</a>
             </nav>
         </div>
@@ -141,19 +146,29 @@
                 <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
                 Tap the floating bubble to trigger the transcription demo
             </div>
+
+            <!-- Quick Install & Setup -->
+            <div class="quick-install-box glass-panel">
+                <h3>⚡ Quick Install & Setup</h3>
+                <ul class="quick-install-list">
+                    <li><strong>Download APK:</strong> Get the latest version from <a href="https://github.com/raviumeshkulkarni-web/Fluence/releases/latest" target="_blank" rel="noopener">GitHub Releases</a> and install it on your Android device.</li>
+                    <li><strong>Configure API:</strong> Open the Fluence app and paste your Groq API Key (stored securely on-device with hardware encryption).</li>
+                    <li><strong>Enable Keyboard:</strong> Turn on the <em>Fluence Keyboard Service</em> inside your system input settings.</li>
+                    <li><strong>Grant Overlay:</strong> Enable the <em>Draw Over Other Apps</em> permission to show the floating overlay trigger.</li>
+                </ul>
+            </div>
         </section>
 
-        <!-- The Dictation Bottleneck & Comparison Table -->
         <section class="problem-solution-container" id="problem-sec">
-            <div class="problem-solution-grid">
-                <div class="glass-panel problem-card">
+            <div class="problem-solution-stack">
+                <div class="glass-panel problem-card accent-card">
                     <div class="card-badge badge-red">The Problem</div>
-                    <h2>The Dictation Bottleneck</h2>
+                    <h2 class="problem-title">The Dictation Bottleneck</h2>
                     <p>Traditional dictation systems are either slow, unpunctuated, or restricted to a specific custom keyboard. Google's streaming STT dictates word-by-word and frequently gets homophones wrong because it lacks contextual sentence-level comprehension. Furthermore, closed-source keyboards pose a massive telemetry and data privacy risk.</p>
                 </div>
-                <div class="glass-panel solution-card">
+                <div class="glass-panel solution-card accent-card">
                     <div class="card-badge badge-green">The Solution</div>
-                    <h2>The Fluence Approach</h2>
+                    <h2 class="solution-title">The Flu<span>ence</span> Approach</h2>
                     <p>Fluence waits for you to finish your sentence/phrase, transcribes it using OpenAI's Whisper Large v3 model on Groq's LPU inference hardware in less than a second, and automatically injects fully-punctuated, context-aware text directly at your cursor.</p>
                 </div>
             </div>
@@ -187,7 +202,7 @@
                             </tr>
                             <tr>
                                 <td class="feature-title">System-wide Overlay</td>
-                                <td class="highlight-cell"><strong>Yes (Floating WisprFlow Bubble)</strong></td>
+                                <td class="highlight-cell"><strong>Yes (System-wide Overlay Button)</strong></td>
                                 <td>No (Restricted to keyboard)</td>
                             </tr>
                             <tr>
@@ -301,30 +316,36 @@
             </div>
         </section>
 
-        <!-- Core Features Grid -->
+        <!-- Core Features Section (Screenshot 3 Style) -->
         <section class="features-container" id="features-sec">
             <h2>Engineered for Perfection</h2>
-            <div class="features-grid">
-                <div class="glass-panel feature-card">
-                    <div class="feature-icon-wrapper">
+            <div class="features-list">
+                <div class="glass-panel feature-card-row accent-card feature-dictation">
+                    <div class="feature-icon-box">
                         <img src="https://lh3.googleusercontent.com/aida-public/AB6AXuA-IRH-h6EGLp9Ogi--lETe3eocV0NriiwEbJdnDbTYRKc32XDpRoKVGGrPuc_2r-G8dbeLUFdNajk1MGkjkK0gSuKcQW4xxDVDaJLSU6rl9ebpFJK0egd7aCDuQo5cKT1_IkS5nOFitffjRM7DZi-u4-X5vzdLP83YVj50JUwk9qnx-XQT1vZ9HlAmEuC916N6rwayuLWIKtUaZoqglcKagrCYiovCSYBF3mfjWlPrmU_1vaZRUkH4GdFHEtV_V273BXmqpZ_Cq4z1" alt="Voice Dictation Icon">
                     </div>
-                    <h3>Voice Dictation</h3>
-                    <p>Powered by OpenAI's Groq-accelerated Whisper Large v3 model. Whisper transcribes in under a second with up to 97.9% word accuracy, handling complex jargon and heavy accents with ease.</p>
+                    <div class="feature-text">
+                        <h3>Voice Dictation</h3>
+                        <p>Powered by OpenAI's Groq-accelerated Whisper Large v3 model. Whisper transcribes in under a second with up to 97.9% word accuracy, handling complex jargon and heavy accents with ease.</p>
+                    </div>
                 </div>
-                <div class="glass-panel feature-card">
-                    <div class="feature-icon-wrapper">
+                <div class="glass-panel feature-card-row accent-card feature-agent">
+                    <div class="feature-icon-box">
                         <img src="https://lh3.googleusercontent.com/aida-public/AB6AXuBiLzj-O367o9g9aUI_K5j1keP4Ael80vfNublWLWsKg_jg4KJ8FcrWdsgCIlurGbsihPoUXtcMHBA8QzQABWEwnIs5-R2CHxBJXtLxGPhjWEFSkEH-_nIZxWLIhFYjGcStmxFVjXfk288MFzwNPutF5TZnj6DpEtUxlp-qE_GlCoA4LLPxBxUZ7puCkrSqdGAg5974mqPMYKHigRtimGK7x0sQh6n233F_ezpi3nq43k-XnIoOYbZl85xF2qjvkRkardfyOaXwIla8" alt="AI Agent Mode Icon">
                     </div>
-                    <h3>AI Agent Mode</h3>
-                    <p>Activated via double-tap. Powered by Llama 3.3 70B, Agent Mode accepts speech instructions directly next to your cursor, processing complex edits like "Delete the last sentence" or "Translate this to French".</p>
+                    <div class="feature-text">
+                        <h3>AI Agent Mode</h3>
+                        <p>Activated via double-tap. Powered by Llama 3.3 70B, Agent Mode accepts speech instructions directly next to your cursor, processing complex edits like "Delete the last sentence" or "Translate this to French".</p>
+                    </div>
                 </div>
-                <div class="glass-panel feature-card">
-                    <div class="feature-icon-wrapper">
+                <div class="glass-panel feature-card-row accent-card feature-privacy">
+                    <div class="feature-icon-box">
                         <img src="https://lh3.googleusercontent.com/aida-public/AB6AXuB_xNK0ohlJogsTImVgdLGFmtsJSHuMVkDBya5pc9XBfZQaQVY3sM6fyjO7A6cJlYn1eDpGwwn7qwwr-zTT7XgasPmL77vDZ2xCnOQ8upPtn-IVJgNkDjh-40p0mQgLCnErH9GP9IYZ6KTMtjBmfx5j7UQgFb4133an6EqClfgkhJoed8oh0zKbIlUHRwcpKdRnJpsNv0YDuyDIQ_YQuSIrod9sxiNiIqe8vh2M2Z-DfbOpf7c-O2Fj2G2dBFviXYhKWQD9mK6tFeap" alt="Ironclad Privacy Icon">
                     </div>
-                    <h3>Ironclad Privacy</h3>
-                    <p>Built for users who refuse to compromise on security. Audio data is ephemeral and deleted instantly. Your API Key is stored safely on-device with Android Keystore hardware encryption.</p>
+                    <div class="feature-text">
+                        <h3>Ironclad Privacy</h3>
+                        <p>Built for users who refuse to compromise on security. Audio data is ephemeral and deleted instantly. Your API Key is stored safely on-device with Android Keystore hardware encryption.</p>
+                    </div>
                 </div>
             </div>
         </section>
@@ -333,7 +354,7 @@
         <section class="roadmap-section" id="roadmap-sec">
             <h2>Future Roadmap</h2>
             <div class="roadmap-grid">
-                <div class="glass-panel roadmap-card active">
+                <div class="glass-panel roadmap-card active accent-card">
                     <div class="roadmap-header">
                         <span class="roadmap-phase">Phase 1</span>
                         <span class="roadmap-badge badge-active">In Development</span>
@@ -341,7 +362,7 @@
                     <h3>Local Edge Models</h3>
                     <p class="roadmap-desc">We are bringing offline voice typing to Fluence. By deploying lightweight, optimized edge models (such as Whisper Mobile/ONNX) directly on Android, the app will support zero-internet, completely offline transcription that runs entirely on-device while preserving transcription quality.</p>
                 </div>
-                <div class="glass-panel roadmap-card">
+                <div class="glass-panel roadmap-card accent-card">
                     <div class="roadmap-header">
                         <span class="roadmap-phase">Phase 2</span>
                         <span class="roadmap-badge badge-planned">Planned</span>
