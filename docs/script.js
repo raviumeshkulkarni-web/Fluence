@@ -41,7 +41,7 @@ function initSimulator() {
     let animationId = null;
     
     // Initial content
-    const originalText = 'Hello World!<br>Tap the floating bubble to start voice typing.';
+    const originalText = 'Hello World!<br>';
     const transcriptionText = 'Fluence transcribes sentences in under a second with human-level accuracy.';
     
     notepadBody.innerHTML = originalText + '<span class="typing-cursor"></span>';

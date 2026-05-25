@@ -355,6 +355,14 @@ main {
     display: flex;
     flex-direction: column;
     z-index: 20;
+    animation: float-device 6s ease-in-out infinite;
+    will-change: transform;
+}
+
+@keyframes float-device {
+    0% { transform: translateY(0px) rotate(0deg); }
+    50% { transform: translateY(-10px) rotate(0.3deg); }
+    100% { transform: translateY(0px) rotate(0deg); }
 }
 
 /* Phone Status Bar */
@@ -536,7 +544,7 @@ main {
 .simulated-floating-bubble {
     position: absolute;
     left: 20px;
-    top: 140px;
+    top: 175px;
     width: 44px;
     height: 44px;
     border-radius: 50%;
@@ -652,18 +660,20 @@ main {
 }
 
 .voice-bar-mic-container {
-    width: 64px;
-    height: 64px;
-    margin-top: -24px;
+    width: 44px;
+    height: 44px;
     position: relative;
     display: flex;
     align-items: center;
     justify-content: center;
+    border: 1.5px solid rgba(168, 85, 247, 0.4);
+    border-radius: 50%;
+    margin-top: 0;
 }
 
 .voice-bar-mic-orb {
-    width: 48px;
-    height: 48px;
+    width: 32px;
+    height: 32px;
     border-radius: 50%;
     background: var(--primary-amethyst);
     border: none;
@@ -672,7 +682,7 @@ main {
     justify-content: center;
     color: var(--text-white);
     cursor: pointer;
-    box-shadow: 0 4px 15px rgba(168, 85, 247, 0.4), 0 0 25px rgba(168, 85, 247, 0.3);
+    box-shadow: 0 0 12px rgba(168, 85, 247, 0.5);
     z-index: 10;
     transition: transform 0.3s;
 }
@@ -682,24 +692,24 @@ main {
 }
 
 .voice-bar-mic-orb svg {
-    width: 24px;
-    height: 24px;
+    width: 16px;
+    height: 16px;
     fill: currentColor;
 }
 
 .voice-bar-mic-pulsing-bg {
     position: absolute;
-    inset: 2px;
+    inset: -6px;
     border-radius: 50%;
-    border: 2px solid var(--primary-amethyst);
-    animation: orb-pulse 2s infinite ease-out;
+    border: 1.5px solid var(--primary-amethyst);
+    animation: orb-pulse 2s infinite cubic-bezier(0.4, 0, 0.2, 1);
     pointer-events: none;
     z-index: 0;
 }
 
 @keyframes orb-pulse {
-    0% { transform: scale(0.95); opacity: 0.8; }
-    100% { transform: scale(1.4); opacity: 0; }
+    0% { transform: scale(0.85); opacity: 0.8; }
+    100% { transform: scale(1.3); opacity: 0; }
 }
 
 .simulator-instruction {
@@ -1326,3 +1336,209 @@ footer {
         padding: 20px;
     }
 }
+
+/* Roadmap Section */
+.roadmap-section {
+    display: flex;
+    flex-direction: column;
+    gap: 40px;
+    width: 100%;
+}
+
+.roadmap-section h2 {
+    font-size: 36px;
+    text-align: center;
+    letter-spacing: -0.02em;
+}
+
+.roadmap-grid {
+    display: grid;
+    grid-template-cols: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 24px;
+}
+
+.roadmap-card {
+    padding: 32px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    border-radius: 24px;
+    position: relative;
+    border-left: 3px solid rgba(255, 255, 255, 0.05);
+}
+
+.roadmap-card.active {
+    border-left: 3px solid var(--primary-amethyst);
+    box-shadow: 0 8px 32px rgba(168, 85, 247, 0.05);
+}
+
+.roadmap-card:hover {
+    border-color: rgba(168, 85, 247, 0.2);
+    transform: translateY(-4px);
+    background: rgba(26, 26, 32, 0.75);
+}
+
+.roadmap-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.roadmap-phase {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--primary-amethyst);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+}
+
+.roadmap-badge {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 999px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.badge-active {
+    background: rgba(168, 85, 247, 0.1);
+    border: 1px solid rgba(168, 85, 247, 0.25);
+    color: #D8B4FE;
+}
+
+.badge-planned {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: var(--text-muted);
+}
+
+.roadmap-card h3 {
+    font-size: 22px;
+    letter-spacing: -0.01em;
+}
+
+.roadmap-desc {
+    color: var(--text-muted);
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+/* Collapsible FAQ Section */
+.faq-section {
+    display: flex;
+    flex-direction: column;
+    gap: 40px;
+    width: 100%;
+}
+
+.faq-section h2 {
+    font-size: 36px;
+    text-align: center;
+    letter-spacing: -0.02em;
+}
+
+.faq-group {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    max-width: 800px;
+    margin: 0 auto;
+    width: 100%;
+}
+
+.faq-item {
+    padding: 24px;
+    border-radius: 16px;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.faq-item:hover {
+    border-color: rgba(168, 85, 247, 0.15);
+    background: rgba(26, 26, 32, 0.7);
+}
+
+.faq-item[open] {
+    border-color: rgba(168, 85, 247, 0.3);
+    background: rgba(26, 26, 32, 0.8);
+    box-shadow: 0 8px 32px rgba(168, 85, 247, 0.05);
+}
+
+.faq-item summary {
+    font-family: var(--font-heading);
+    font-size: 17px;
+    font-weight: 600;
+    color: var(--text-white);
+    list-style: none;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    outline: none;
+    user-select: none;
+}
+
+.faq-item summary::-webkit-details-marker {
+    display: none;
+}
+
+.faq-item summary::marker {
+    display: none;
+}
+
+.faq-item summary::after {
+    content: '+';
+    font-size: 22px;
+    font-weight: 400;
+    color: var(--primary-amethyst);
+    transition: transform 0.3s ease;
+    line-height: 1;
+}
+
+.faq-item[open] summary::after {
+    content: '−';
+    color: var(--accent-cyan);
+}
+
+.faq-content {
+    margin-top: 16px;
+    color: var(--text-muted);
+    font-size: 14px;
+    line-height: 1.6;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+    padding-top: 16px;
+    cursor: default;
+}
+
+.faq-item[open] .faq-content {
+    animation: faq-slide-down 0.3s ease-out;
+}
+
+@keyframes faq-slide-down {
+    0% { opacity: 0; transform: translateY(-8px); }
+    100% { opacity: 1; transform: translateY(0); }
+}
+
+/* Extra Responsive Adjustments */
+@media (max-width: 768px) {
+    .roadmap-card {
+        padding: 24px;
+    }
+    .faq-item {
+        padding: 20px;
+    }
+    .faq-item summary {
+        font-size: 15px;
+    }
+}
+
+@media (max-width: 360px) {
+    .device-frame {
+        transform: scale(0.9);
+        transform-origin: center center;
+        margin: -30px 0;
+    }
+}
+

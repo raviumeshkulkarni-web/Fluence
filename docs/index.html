@@ -51,7 +51,7 @@
 
         <!-- Hero Section -->
         <section class="hero" id="hero-sec">
-            <div class="version-tag">Beta release v1.0.0</div>
+            <div class="version-tag">Latest release v1.2.1</div>
             <h1>Crystallize your cognition at the <span class="text-gradient">speed of thought</span></h1>
             <p>An open-source, system-wide floating voice typing assistant for Android powered by the ultra-fast Groq Whisper API.</p>
             <div class="hero-ctas">
@@ -326,6 +326,60 @@
                     <h3>Ironclad Privacy</h3>
                     <p>Built for users who refuse to compromise on security. Audio data is ephemeral and deleted instantly. Your API Key is stored safely on-device with Android Keystore hardware encryption.</p>
                 </div>
+            </div>
+        </section>
+
+        <!-- Future Roadmap Section -->
+        <section class="roadmap-section" id="roadmap-sec">
+            <h2>Future Roadmap</h2>
+            <div class="roadmap-grid">
+                <div class="glass-panel roadmap-card active">
+                    <div class="roadmap-header">
+                        <span class="roadmap-phase">Phase 1</span>
+                        <span class="roadmap-badge badge-active">In Development</span>
+                    </div>
+                    <h3>Local Edge Models</h3>
+                    <p class="roadmap-desc">We are bringing offline voice typing to Fluence. By deploying lightweight, optimized edge models (such as Whisper Mobile/ONNX) directly on Android, the app will support zero-internet, completely offline transcription that runs entirely on-device while preserving transcription quality.</p>
+                </div>
+                <div class="glass-panel roadmap-card">
+                    <div class="roadmap-header">
+                        <span class="roadmap-phase">Phase 2</span>
+                        <span class="roadmap-badge badge-planned">Planned</span>
+                    </div>
+                    <h3>Desktop Release</h3>
+                    <p class="roadmap-desc">Bringing system-wide voice dictation and AI agent assistance to desktop environments. We are planning a cross-platform desktop application supporting Windows, macOS, and Linux with custom global keyboard triggers, clipboard injection, and workstation LLM support.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Collapsible FAQ Section -->
+        <section class="faq-section" id="faq-sec">
+            <h2>Frequently Asked Questions</h2>
+            <div class="faq-group">
+                <details name="faq-accordion" class="glass-panel faq-item" open>
+                    <summary>Is Fluence free to use?</summary>
+                    <div class="faq-content">
+                        <p>Yes, Fluence is 100% free and open-source under the Apache 2.0 license. Since transcription is processed using API keys, you only pay for your own usage. Groq offers a generous free tier for developers, and even on paid tiers, Whisper transcription costs a fraction of a cent per hour of usage.</p>
+                    </div>
+                </details>
+                <details name="faq-accordion" class="glass-panel faq-item">
+                    <summary>How is my data privacy protected?</summary>
+                    <div class="faq-content">
+                        <p>Fluence is built on ironclad privacy principles. There is zero telemetry and no server logging. Audio recording is ephemeral—sent securely to the Whisper API, transcribed, and instantly discarded. Your Groq API key is stored safely on your device inside the Android Keystore using hardware-backed encryption.</p>
+                    </div>
+                </details>
+                <details name="faq-accordion" class="glass-panel faq-item">
+                    <summary>Does it support languages other than English?</summary>
+                    <div class="faq-content">
+                        <p>Yes. Whisper Large v3 supports 99+ languages with high accuracy. It features automatic language detection (so you can speak in your native language, and it will transcribe correctly) and automatic translation to English if configured.</p>
+                    </div>
+                </details>
+                <details name="faq-accordion" class="glass-panel faq-item">
+                    <summary>Can it run completely offline?</summary>
+                    <div class="faq-content">
+                        <p>Currently, Fluence requires an internet connection to send audio to Groq Whisper v3. However, fully offline local edge models are the top priority on our roadmap (Phase 1) and will be released in an upcoming update to allow complete zero-internet voice typing.</p>
+                    </div>
+                </details>
             </div>
         </section>
 
