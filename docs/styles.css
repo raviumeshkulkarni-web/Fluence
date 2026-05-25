@@ -780,32 +780,9 @@ main {
 }
 
 .feature-card-row {
-    display: flex;
+    flex-direction: row;
     gap: 28px;
     align-items: flex-start;
-    padding: 32px;
-    transition: border-color 0.3s, transform 0.3s, background-color 0.3s;
-}
-
-.feature-card-row:hover {
-    border-color: rgba(168, 85, 247, 0.15);
-    transform: translateY(-4px);
-    background: rgba(26, 26, 32, 0.75);
-}
-
-.feature-dictation {
-    --card-accent: var(--primary-amethyst);
-    --card-glow: 0 0 12px rgba(168, 85, 247, 0.4);
-}
-
-.feature-agent {
-    --card-accent: var(--glow-indigo);
-    --card-glow: 0 0 12px rgba(99, 102, 241, 0.4);
-}
-
-.feature-privacy {
-    --card-accent: var(--color-green);
-    --card-glow: 0 0 12px rgba(16, 185, 129, 0.4);
 }
 
 .feature-icon-box {
@@ -1239,29 +1216,7 @@ footer {
     width: 100%;
 }
 
-.problem-card {
-    --card-accent: #EF4444;
-    --card-glow: 0 0 12px rgba(239, 68, 68, 0.45);
-    border-left: 1px solid rgba(239, 68, 68, 0.1);
-}
-
-.solution-card {
-    --card-accent: var(--accent-cyan);
-    --card-glow: 0 0 16px rgba(0, 242, 254, 0.5);
-    border-left: 1px solid rgba(0, 242, 254, 0.1);
-    box-shadow: 0 8px 32px rgba(0, 242, 254, 0.05), var(--shadow-glass);
-}
-
-.problem-title {
-    font-family: var(--font-heading);
-    font-size: 26px;
-    font-weight: 700;
-    letter-spacing: -0.03em;
-    color: var(--text-white);
-    margin-bottom: 8px;
-}
-
-.solution-title {
+.problem-title, .solution-title {
     font-family: var(--font-heading);
     font-size: 26px;
     font-weight: 700;
@@ -1415,29 +1370,13 @@ footer {
     letter-spacing: -0.02em;
 }
 
+/* Roadmap styles */
 .roadmap-grid {
     display: grid;
     grid-template-cols: repeat(auto-fit, minmax(320px, 1fr));
     gap: 24px;
 }
 
-.roadmap-card {
-    --card-accent: rgba(255, 255, 255, 0.05);
-    --card-glow: none;
-    transition: border-color 0.3s, transform 0.3s, background-color 0.3s;
-}
-
-.roadmap-card.active {
-    --card-accent: var(--primary-amethyst);
-    --card-glow: 0 0 12px rgba(168, 85, 247, 0.4);
-    box-shadow: 0 8px 32px rgba(168, 85, 247, 0.05), var(--shadow-glass);
-}
-
-.roadmap-card:hover {
-    border-color: rgba(168, 85, 247, 0.2);
-    transform: translateY(-4px);
-    background: rgba(26, 26, 32, 0.75);
-}
 
 .roadmap-header {
     display: flex;
@@ -1511,21 +1450,7 @@ footer {
 }
 
 .faq-item {
-    padding: 24px;
-    border-radius: 16px;
     cursor: pointer;
-    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.faq-item:hover {
-    border-color: rgba(168, 85, 247, 0.15);
-    background: rgba(26, 26, 32, 0.7);
-}
-
-.faq-item[open] {
-    border-color: rgba(168, 85, 247, 0.3);
-    background: rgba(26, 26, 32, 0.8);
-    box-shadow: 0 8px 32px rgba(168, 85, 247, 0.05);
 }
 
 .faq-item summary {
@@ -1582,45 +1507,52 @@ footer {
     100% { opacity: 1; transform: translateY(0); }
 }
 
-/* Accent Card layout containing the left vertical indicator pill */
-.accent-card {
-    position: relative;
-    padding-left: 48px !important; /* Make room for the left accent pill */
+/* Unified Glassmorphic Card (Matching the FAQ styling) */
+.problem-card,
+.solution-card,
+.feature-card-row,
+.roadmap-card,
+.faq-item,
+.quick-install-box {
+    background: rgba(22, 22, 28, 0.65);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    backdrop-filter: blur(25px);
+    -webkit-backdrop-filter: blur(25px);
+    box-shadow: var(--shadow-glass);
+    border-radius: 24px;
+    padding: 32px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease, background-color 0.3s ease, transform 0.3s ease;
 }
 
-.accent-card::before {
-    content: '';
-    position: absolute;
-    left: 16px;
-    top: 24px;
-    bottom: 24px;
-    width: 4px;
-    border-radius: 999px; /* Rounded pill shape */
-    background: var(--card-accent, rgba(255, 255, 255, 0.05));
-    box-shadow: var(--card-glow, none);
-    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+/* Unified Hover Glow (Triggered on hover, open details, and active roadmap phases) */
+.problem-card:hover,
+.solution-card:hover,
+.feature-card-row:hover,
+.roadmap-card:hover,
+.roadmap-card.active,
+.faq-item:hover,
+.faq-item[open],
+.quick-install-box:hover {
+    border-color: rgba(168, 85, 247, 0.45);
+    background-color: rgba(26, 26, 32, 0.75);
+    box-shadow: 0 8px 32px rgba(168, 85, 247, 0.15);
+    transform: translateY(-2px);
 }
 
-.accent-card:hover::before {
-    top: 16px;
-    bottom: 16px;
-}
-
-/* Quick Install Box styling */
+/* Quick Install Box spacing overrides */
 .quick-install-box {
     margin-top: 32px;
-    padding: 28px 32px;
     max-width: 600px;
     width: 100%;
-    border: 1px solid rgba(255, 255, 255, 0.06);
-    border-radius: 24px;
-    box-shadow: var(--shadow-glass);
     text-align: left;
 }
 
 .quick-install-box h3 {
     font-size: 17px;
-    margin-bottom: 16px;
+    margin-bottom: 8px;
     font-family: var(--font-heading);
     color: var(--text-white);
     display: flex;
@@ -1674,27 +1606,18 @@ footer {
     .feature-card-row {
         flex-direction: column;
         gap: 16px;
+    }
+    .problem-card,
+    .solution-card,
+    .feature-card-row,
+    .roadmap-card,
+    .faq-item,
+    .quick-install-box {
         padding: 24px;
-    }
-    .accent-card {
-        padding-left: 36px !important;
-        padding-top: 36px !important;
-    }
-    .accent-card::before {
-        left: 16px;
-        top: 36px;
-        bottom: 24px;
-        width: 3px;
+        gap: 12px;
     }
     .quick-install-box {
-        padding: 20px 24px;
         margin-top: 24px;
-    }
-    .roadmap-card {
-        padding: 24px;
-    }
-    .faq-item {
-        padding: 20px;
     }
     .faq-item summary {
         font-size: 15px;
