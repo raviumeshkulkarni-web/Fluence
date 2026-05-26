@@ -32,6 +32,7 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import java.io.File
+import com.groq.voicetyper.offline.*
 
 class VoiceInputIME : InputMethodService(), LifecycleOwner, ViewModelStoreOwner, SavedStateRegistryOwner {
 
@@ -52,6 +53,10 @@ class VoiceInputIME : InputMethodService(), LifecycleOwner, ViewModelStoreOwner,
     private lateinit var scope: CoroutineScope
     private lateinit var audioRecorder: AudioRecorder
     private lateinit var composeView: ComposeView
+
+    // Offline pipeline — null when offline mode is disabled
+    private var offlinePipeline: OfflineTranscriptionPipeline? = null
+    private var isOfflineMode by mutableStateOf(false)
 
     // IME State
     private var apiKey by mutableStateOf<String?>(null)
@@ -193,23 +198,47 @@ class VoiceInputIME : InputMethodService(), LifecycleOwner, ViewModelStoreOwner,
                 isAgentMode = isAgentMode,
                 errorMessage = errorMessage,
                 onCancelRecording = {
-                    audioRecorder.cancelRecording()
-                    recordingState = RecordingState.IDLE
-                    isAgentMode = false
+                    if (!isAgentMode && isOfflineMode && offlinePipeline?.isRunning?.value == true) {
+                        scope.launch {
+                            offlinePipeline?.forceRelease()
+                            recordingState = RecordingState.IDLE
+                        }
+                    } else {
+                        audioRecorder.cancelRecording()
+                        recordingState = RecordingState.IDLE
+                        isAgentMode = false
+                    }
                 },
                 onStartRecording = { agentMode ->
                     errorMessage = null
-                    recordingState = RecordingState.RECORDING
-                    isAgentMode = agentMode
-                    audioRecorder.startRecording()
+                    if (agentMode) {
+                        recordingState = RecordingState.RECORDING
+                        isAgentMode = true
+                        audioRecorder.startRecording()
+                    } else if (isOfflineMode && ModelAssetManager.isModelReadySync(this)) {
+                        recordingState = RecordingState.RECORDING
+                        isAgentMode = false
+                        startOfflineRecording()
+                    } else {
+                        recordingState = RecordingState.RECORDING
+                        isAgentMode = false
+                        audioRecorder.startRecording()
+                    }
                 },
                 onStopRecording = {
-                    recordingState = RecordingState.TRANSCRIBING
-                    val file = audioRecorder.stopRecording()
-                    if (file != null) {
-                        transcribeAudio(file)
+                    if (!isAgentMode && isOfflineMode && offlinePipeline?.isRunning?.value == true) {
+                        scope.launch {
+                            offlinePipeline?.stop()
+                            recordingState = RecordingState.IDLE
+                        }
                     } else {
-                        recordingState = RecordingState.IDLE
+                        recordingState = RecordingState.TRANSCRIBING
+                        val file = audioRecorder.stopRecording()
+                        if (file != null) {
+                            transcribeAudio(file)
+                        } else {
+                            recordingState = RecordingState.IDLE
+                        }
                     }
                 },
                 onSwitchKeyboard = {
@@ -225,7 +254,9 @@ class VoiceInputIME : InputMethodService(), LifecycleOwner, ViewModelStoreOwner,
                         val imm = getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
                         imm.showInputMethodPicker()
                     }
-                }
+                },
+                isOfflineReady = ModelAssetManager.isModelReadySync(this),
+                isOfflineMode = isOfflineMode
             )
         }
         return composeView
@@ -287,6 +318,7 @@ class VoiceInputIME : InputMethodService(), LifecycleOwner, ViewModelStoreOwner,
         Log.d(TAG, "onStartInputView: Starting input view, restarting=$restarting, inputType=${info?.inputType}")
         // Refresh API Key from EncryptedSharedPreferences on open
         apiKey = SecurityUtils.getApiKey(this)
+        isOfflineMode = OfflinePreferences.isOfflineModeEnabled(this)
         recordingState = RecordingState.IDLE
         errorMessage = null
 
@@ -298,7 +330,17 @@ class VoiceInputIME : InputMethodService(), LifecycleOwner, ViewModelStoreOwner,
         super.onFinishInputView(finishingInput)
         // Stop any ongoing recording when keyboard is closed
         if (recordingState == RecordingState.RECORDING) {
-            audioRecorder.cancelRecording()
+            if (!isAgentMode && isOfflineMode && offlinePipeline?.isRunning?.value == true) {
+                scope.launch {
+                    offlinePipeline?.forceRelease()
+                }
+            } else {
+                audioRecorder.cancelRecording()
+            }
+        }
+        // Force release pipeline to reclaim model memory (LMK safety)
+        scope.launch {
+            offlinePipeline?.forceRelease()
         }
         recordingState = RecordingState.IDLE
 
@@ -423,6 +465,29 @@ class VoiceInputIME : InputMethodService(), LifecycleOwner, ViewModelStoreOwner,
             }
         } catch (e: Exception) {
             "en"
+        }
+    }
+
+    private fun startOfflineRecording() {
+        scope.launch {
+            try {
+                val modelDir = ModelAssetManager.getModelDir(this@VoiceInputIME).absolutePath
+                val pipeline = offlinePipeline ?: OfflineTranscriptionPipeline(this@VoiceInputIME).also {
+                    offlinePipeline = it
+                }
+                pipeline.onTextTranscribed = { text ->
+                    currentInputConnection?.let { conn ->
+                        val cleanText = text.trim()
+                        if (cleanText.isNotEmpty()) {
+                            conn.commitText("$cleanText ", 1)
+                        }
+                    }
+                }
+                pipeline.initialize(modelDir)
+                pipeline.start()
+            } catch (e: Exception) {
+                showError("Offline transcription failed: ${e.localizedMessage}")
+            }
         }
     }
 

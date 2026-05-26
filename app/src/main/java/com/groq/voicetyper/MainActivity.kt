@@ -43,6 +43,7 @@ import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.*
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalConfiguration
+import com.groq.voicetyper.offline.*
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -52,6 +53,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
 
@@ -575,6 +577,7 @@ fun SetupScreen(
     val context = LocalContext.current
     val scrollState = rememberScrollState()
     val screenHeight = LocalConfiguration.current.screenHeightDp.dp
+    val coroutineScope = rememberCoroutineScope()
 
     // Setup Status States
     var hasMicPermission by remember { mutableStateOf(false) }
@@ -591,6 +594,14 @@ fun SetupScreen(
     var hasOverlayPermission by remember { mutableStateOf(false) }
     var isAccessibilityEnabled by remember { mutableStateOf(false) }
     var isBatteryOptimizationsIgnored by remember { mutableStateOf(false) }
+
+    // Offline Mode State variables
+    var isOfflineModeEnabled by remember { mutableStateOf(false) }
+    var downloadState by remember { mutableStateOf(ModelAssetManager.DownloadState.IDLE) }
+    var downloadProgress by remember { mutableStateOf(0f) }
+    var downloadPercent by remember { mutableStateOf(0) }
+    var isModelDownloaded by remember { mutableStateOf(false) }
+    var modelSizeMB by remember { mutableStateOf(0L) }
 
     // Entrance Animation Control
     val splashProgressAnim = remember { Animatable(0f) }
@@ -660,6 +671,32 @@ fun SetupScreen(
 
         isFloatingBubbleEnabled = context.getSharedPreferences("fluence_prefs", Context.MODE_PRIVATE)
             .getBoolean("floating_bubble_enabled", false)
+
+        isOfflineModeEnabled = OfflinePreferences.isOfflineModeEnabled(context)
+        isModelDownloaded = ModelAssetManager.isModelReadySync(context)
+        modelSizeMB = ModelAssetManager.getModelSizeOnDisk(context) / (1024L * 1024L)
+
+        // Monitor download progress
+        launch {
+            ModelAssetManager.progress.collect { prog ->
+                downloadState = prog.state
+                if (prog.totalBytes > 0) {
+                    downloadProgress = prog.bytesDownloaded.toFloat() / prog.totalBytes.toFloat()
+                    downloadPercent = (downloadProgress * 100).toInt()
+                } else {
+                    downloadProgress = 0f
+                    downloadPercent = 0
+                }
+                
+                if (prog.state == ModelAssetManager.DownloadState.COMPLETED) {
+                    isModelDownloaded = true
+                    modelSizeMB = ModelAssetManager.getModelSizeOnDisk(context) / (1024L * 1024L)
+                } else if (prog.state == ModelAssetManager.DownloadState.IDLE) {
+                    isModelDownloaded = ModelAssetManager.isModelReadySync(context)
+                    modelSizeMB = ModelAssetManager.getModelSizeOnDisk(context) / (1024L * 1024L)
+                }
+            }
+        }
 
         // Hold splash screen briefly, then smoothly slide logo up
         delay(1200)
@@ -1170,6 +1207,127 @@ fun SetupScreen(
                                         uncheckedTrackColor = Color(0xFF1E1E24)
                                     )
                                 )
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(24.dp))
+
+                    // Offline Mode settings card
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = CardDefaults.cardColors(containerColor = Color.Transparent),
+                        shape = RoundedCornerShape(24.dp)
+                    ) {
+                        Box(modifier = Modifier.fillMaxWidth().glassCard().padding(20.dp)) {
+                            Column {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Text(
+                                            text = "Offline Transcription",
+                                            color = Color.White,
+                                            fontSize = 16.sp,
+                                            fontWeight = FontWeight.Bold
+                                        )
+                                        Text(
+                                            text = "Dictate without internet using on-device AI. English only.",
+                                            color = Color(0xFFCFC2D6).copy(alpha = 0.8f),
+                                            fontSize = 12.sp,
+                                            modifier = Modifier.padding(top = 4.dp)
+                                        )
+                                    }
+                                    Switch(
+                                        checked = isOfflineModeEnabled,
+                                        onCheckedChange = { isChecked ->
+                                            if (isChecked) {
+                                                if (isModelDownloaded) {
+                                                    isOfflineModeEnabled = true
+                                                    OfflinePreferences.setOfflineModeEnabled(context, true)
+                                                } else {
+                                                    coroutineScope.launch {
+                                                        val result = ModelAssetManager.downloadModel(context)
+                                                        if (result.isSuccess) {
+                                                            isOfflineModeEnabled = true
+                                                            OfflinePreferences.setOfflineModeEnabled(context, true)
+                                                        } else {
+                                                            isOfflineModeEnabled = false
+                                                            OfflinePreferences.setOfflineModeEnabled(context, false)
+                                                            val err = result.exceptionOrNull()?.localizedMessage ?: "Unknown error"
+                                                            if (downloadState != ModelAssetManager.DownloadState.CANCELLED) {
+                                                                Toast.makeText(context, "Download failed: $err", Toast.LENGTH_LONG).show()
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            } else {
+                                                isOfflineModeEnabled = false
+                                                OfflinePreferences.setOfflineModeEnabled(context, false)
+                                            }
+                                        },
+                                        enabled = downloadState != ModelAssetManager.DownloadState.DOWNLOADING && downloadState != ModelAssetManager.DownloadState.VERIFYING,
+                                        colors = SwitchDefaults.colors(
+                                            checkedThumbColor = Color.White,
+                                            checkedTrackColor = Color(0xFF00F5D4),
+                                            uncheckedThumbColor = Color(0xFF8E8E9A),
+                                            uncheckedTrackColor = Color(0xFF1E1E24)
+                                        )
+                                    )
+                                }
+
+                                // Download progress UI
+                                AnimatedVisibility(visible = downloadState == ModelAssetManager.DownloadState.DOWNLOADING || downloadState == ModelAssetManager.DownloadState.VERIFYING) {
+                                    Column(modifier = Modifier.padding(top = 12.dp)) {
+                                        LinearProgressIndicator(
+                                            progress = downloadProgress,
+                                            modifier = Modifier.fillMaxWidth().height(4.dp),
+                                            color = Color(0xFF00F5D4),
+                                            trackColor = Color(0xFF1E1E24)
+                                        )
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+                                            horizontalArrangement = Arrangement.SpaceBetween
+                                        ) {
+                                            val statusLabel = if (downloadState == ModelAssetManager.DownloadState.VERIFYING) "Verifying model..." else "Downloading model..."
+                                            Text(statusLabel, color = Color(0xFFCFC2D6), fontSize = 12.sp)
+                                            Text("${downloadPercent}%", color = Color(0xFF00F5D4), fontSize = 12.sp)
+                                        }
+                                        TextButton(
+                                            onClick = { ModelAssetManager.cancelDownload() },
+                                            modifier = Modifier.padding(top = 4.dp)
+                                        ) {
+                                            Text("Cancel", color = Color(0xFFFF5252), fontSize = 12.sp)
+                                        }
+                                    }
+                                }
+
+                                // Model ready status UI
+                                AnimatedVisibility(visible = isModelDownloaded && downloadState != ModelAssetManager.DownloadState.DOWNLOADING && downloadState != ModelAssetManager.DownloadState.VERIFYING) {
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth().padding(top = 12.dp),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Text(
+                                            text = "✓ Model ready (${modelSizeMB}MB)",
+                                            color = Color(0xFF00F2FE),
+                                            fontSize = 12.sp
+                                        )
+                                        TextButton(onClick = {
+                                            coroutineScope.launch {
+                                                ModelAssetManager.deleteModel(context)
+                                                isModelDownloaded = false
+                                                isOfflineModeEnabled = false
+                                                OfflinePreferences.setOfflineModeEnabled(context, false)
+                                            }
+                                        }) {
+                                            Text("Delete Model", color = Color(0xFFFF5252), fontSize = 12.sp)
+                                        }
+                                    }
+                                }
                             }
                         }
                     }

@@ -81,7 +81,9 @@ fun IMEScreen(
     onCancelRecording: () -> Unit,
     onStartRecording: (Boolean) -> Unit,
     onStopRecording: () -> Unit,
-    onSwitchKeyboard: () -> Unit
+    onSwitchKeyboard: () -> Unit,
+    isOfflineReady: Boolean = false,
+    isOfflineMode: Boolean = false
 ) {
 
     // Recording duration timer
@@ -100,7 +102,7 @@ fun IMEScreen(
     val seconds = recordTimeSeconds % 60
     val timeText = String.format(Locale.US, "%02d:%02d", minutes, seconds)
 
-    val isEnabled = !apiKey.isNullOrBlank() && recordingState != RecordingState.TRANSCRIBING
+    val isEnabled = (isOfflineReady || !apiKey.isNullOrBlank()) && recordingState != RecordingState.TRANSCRIBING
     val currentRecordingState by rememberUpdatedState(recordingState)
     val currentOnStartRecording by rememberUpdatedState(onStartRecording)
     val currentOnStopRecording by rememberUpdatedState(onStopRecording)
@@ -152,8 +154,8 @@ fun IMEScreen(
     }
 
     val statusText = when (recordingState) {
-        RecordingState.IDLE -> if (apiKey.isNullOrBlank()) "API KEY REQUIRED" else "Ready"
-        RecordingState.RECORDING -> if (isAgentMode) "AI Command Mode... ($timeText)" else "Listening... ($timeText)"
+        RecordingState.IDLE -> if (isOfflineReady && isOfflineMode) "Ready (offline)" else if (apiKey.isNullOrBlank()) "API KEY REQUIRED" else "Ready"
+        RecordingState.RECORDING -> if (isAgentMode) "AI Command Mode... ($timeText)" else if (isOfflineMode) "Listening (offline)... ($timeText)" else "Listening... ($timeText)"
         RecordingState.TRANSCRIBING -> "Transcribing..."
         RecordingState.ERROR -> errorMessage ?: "ERROR"
     }

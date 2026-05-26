@@ -20,6 +20,12 @@ android {
         }
     }
 
+    testOptions {
+        unitTests {
+            isReturnDefaultValues = true
+        }
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = true
@@ -64,5 +70,14 @@ dependencies {
     implementation(libs.okhttp)
     implementation(libs.androidx.security.crypto)
     
+    // Offline speech-to-text engine (SenseVoice-Small via sherpa-onnx)
+    implementation(files("libs/sherpa-onnx-1.13.2.aar"))
+    
     debugImplementation(libs.androidx.compose.ui.tooling)
+    
+    // Unit Testing
+    testImplementation(libs.junit)
+    testImplementation(libs.mockk)
+    testImplementation(libs.kotlinx.coroutines.test)
+    testImplementation(libs.mockwebserver)
 }

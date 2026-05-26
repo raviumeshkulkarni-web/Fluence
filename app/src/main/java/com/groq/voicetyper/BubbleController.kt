@@ -17,6 +17,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import java.io.File
+import com.groq.voicetyper.offline.*
 
 object BubbleController {
     private const val TAG = "BubbleController"
@@ -38,6 +39,10 @@ object BubbleController {
 
     private val _amplitude = MutableStateFlow(0f)
     val amplitude: StateFlow<Float> = _amplitude.asStateFlow()
+
+    private var offlinePipeline: OfflineTranscriptionPipeline? = null
+    private var isOfflineMode = false
+    private var offlineAmplitudeJob: kotlinx.coroutines.Job? = null
 
     /**
      * Strong reference to the currently-focused editable accessibility node.
@@ -111,6 +116,11 @@ object BubbleController {
             activeNode?.recycle()
             activeNode = null
         }
+        offlineAmplitudeJob?.cancel()
+        offlineAmplitudeJob = null
+        scope.launch {
+            offlinePipeline?.forceRelease()
+        }
     }
 
     /**
@@ -132,25 +142,50 @@ object BubbleController {
         _isAgentMode.value = agentMode
         _recordingState.value = RecordingState.RECORDING
         _isBubbleExpanded.value = true
-        audioRecorder?.startRecording()
+
+        isOfflineMode = OfflinePreferences.isOfflineModeEnabled(context)
+        if (!agentMode && isOfflineMode && ModelAssetManager.isModelReadySync(context)) {
+            startOfflineRecording(context)
+        } else {
+            audioRecorder?.startRecording()
+        }
     }
 
     fun stopRecording(context: Context) {
-        _recordingState.value = RecordingState.TRANSCRIBING
-        val file = audioRecorder?.stopRecording()
-        if (file != null) {
-            transcribeAudio(context, file)
+        if (!_isAgentMode.value && isOfflineMode && offlinePipeline?.isRunning?.value == true) {
+            scope.launch {
+                offlinePipeline?.stop()
+                _recordingState.value = RecordingState.IDLE
+                _isBubbleExpanded.value = false
+            }
         } else {
-            _recordingState.value = RecordingState.IDLE
-            _isBubbleExpanded.value = false
+            _recordingState.value = RecordingState.TRANSCRIBING
+            val file = audioRecorder?.stopRecording()
+            if (file != null) {
+                transcribeAudio(context, file)
+            } else {
+                _recordingState.value = RecordingState.IDLE
+                _isBubbleExpanded.value = false
+            }
         }
     }
 
     fun cancelRecording() {
-        audioRecorder?.cancelRecording()
-        _recordingState.value = RecordingState.IDLE
-        _isBubbleExpanded.value = false
-        _isAgentMode.value = false
+        if (!_isAgentMode.value && isOfflineMode && offlinePipeline?.isRunning?.value == true) {
+            offlineAmplitudeJob?.cancel()
+            offlineAmplitudeJob = null
+            scope.launch {
+                offlinePipeline?.forceRelease()
+                _recordingState.value = RecordingState.IDLE
+                _isBubbleExpanded.value = false
+                _isAgentMode.value = false
+            }
+        } else {
+            audioRecorder?.cancelRecording()
+            _recordingState.value = RecordingState.IDLE
+            _isBubbleExpanded.value = false
+            _isAgentMode.value = false
+        }
     }
 
     private fun transcribeAudio(context: Context, file: File) {
@@ -544,6 +579,36 @@ object BubbleController {
                 selectBundle.putInt(AccessibilityNodeInfo.ACTION_ARGUMENT_SELECTION_START_INT, selectionStart)
                 selectBundle.putInt(AccessibilityNodeInfo.ACTION_ARGUMENT_SELECTION_END_INT, selectionStart)
                 node.performAction(AccessibilityNodeInfo.ACTION_SET_SELECTION, selectBundle)
+            }
+        }
+    }
+
+    private fun startOfflineRecording(context: Context) {
+        scope.launch {
+            try {
+                val modelDir = ModelAssetManager.getModelDir(context).absolutePath
+                val pipeline = offlinePipeline ?: OfflineTranscriptionPipeline(context).also {
+                    offlinePipeline = it
+                }
+                pipeline.onTextTranscribed = { text ->
+                    mainHandler.post {
+                        injectText(context, text)
+                    }
+                }
+                pipeline.initialize(modelDir)
+                pipeline.start()
+
+                // Collect amplitude from offline pipeline for UI visualization
+                offlineAmplitudeJob?.cancel()
+                offlineAmplitudeJob = scope.launch {
+                    pipeline.amplitude.collect {
+                        _amplitude.value = it
+                    }
+                }
+            } catch (e: Exception) {
+                mainHandler.post {
+                    showError(e.localizedMessage ?: "Offline transcription failed")
+                }
             }
         }
     }
