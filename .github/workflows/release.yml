@@ -71,5 +71,31 @@ jobs:
         name: Release ${{ env.TAG_NAME }}
         draft: false
         prerelease: ${{ contains(env.TAG_NAME, '-') }}
+        body: |
+          ## 🎙️ Fluence ${{ env.TAG_NAME }} — Offline Mode & UI Refresh
+
+          ### 🆕 What's New
+
+          **Offline Transcription Mode 🔌**
+          - Added 100% on-device voice typing powered by **Alibaba SenseVoice-Small** (quantized ONNX model, ~230MB)
+          - Integrated **Silero VAD** (Voice Activity Detection) for smart silence detection during offline recording
+          - Model downloads automatically on first use — no manual setup required
+          - Includes checksum verification to ensure model integrity
+          - Zero internet connection required when offline mode is active
+
+          **Bug Fixes & Stability**
+          - Fixed offline transcription glitches: VAD audio segments now processed sequentially via a Channel worker
+          - Fixed touch-release accidentally restarting recording after stop
+          - Improved UI thread performance and Compose recomposition optimizations
+
+          **UI Polish**
+          - Unified glass design across all overlay UIs with hover glow effects
+          - Updated landing page with problem statement, comparison table, collapsible FAQs, and roadmap
+
+          ---
+
+          ### 📦 Installation
+          Download `app-release.apk` below and install directly on your Android device (API 26+).
+          > You may need to allow **"Install from Unknown Sources"** in your device settings.
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
