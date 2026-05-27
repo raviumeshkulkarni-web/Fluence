@@ -32,6 +32,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.isActive
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.ui.composed
 import kotlin.math.sin
@@ -40,7 +41,7 @@ import kotlin.math.sin
 fun FloatingBubbleUI(
     onDrag: (dx: Float, dy: Float) -> Unit,
     onDragReleased: () -> Unit,
-    onExpandChanged: (Boolean) -> Unit
+    onWidthUpdated: (Float) -> Unit
 ) {
     val context = LocalContext.current
     val view = androidx.compose.ui.platform.LocalView.current
@@ -49,21 +50,16 @@ fun FloatingBubbleUI(
     val errorMessage by BubbleController.errorMessage.collectAsState()
     val coroutineScope = rememberCoroutineScope()
 
-    // Notify parent window manager of size changes so position can be adjusted if on right side
-    var previousExpanded by remember { mutableStateOf(isExpanded) }
-    LaunchedEffect(isExpanded) {
-        if (isExpanded != previousExpanded) {
-            previousExpanded = isExpanded
-            onExpandChanged(isExpanded)
-        }
-    }
-
     // Size animations for morphing transition (NoBouncy to prevent layout window oscillation)
     val width by animateDpAsState(
         targetValue = if (isExpanded) 240.dp else 56.dp,
         animationSpec = spring(dampingRatio = Spring.DampingRatioNoBouncy, stiffness = Spring.StiffnessMedium),
         label = "width"
     )
+
+    SideEffect {
+        onWidthUpdated(width.value)
+    }
     val height by animateDpAsState(
         targetValue = if (isExpanded) 64.dp else 56.dp,
         animationSpec = spring(dampingRatio = Spring.DampingRatioNoBouncy, stiffness = Spring.StiffnessMedium),
@@ -417,83 +413,108 @@ fun MiniFluenceOrb() {
  */
 @Composable
 fun SiriWaveform() {
-    val amplitude by BubbleController.amplitude.collectAsState()
+    val rawAmplitude by BubbleController.amplitude.collectAsState()
     val isAgentMode by BubbleController.isAgentMode.collectAsState()
-    val wave1Color = if (isAgentMode) Color(0xFF00BBF9).copy(alpha = 0.45f) else Color(0xFF6366F1).copy(alpha = 0.45f)
-    val wave2Color = if (isAgentMode) Color(0xFF00F5D4).copy(alpha = 0.65f) else Color(0xFFA855F7).copy(alpha = 0.65f)
-    val wave3Color = Color.White.copy(alpha = 0.95f)
 
-    val infiniteTransition = rememberInfiniteTransition(label = "siri_waves")
-    val phase1 by infiniteTransition.animateFloat(
-        initialValue = 0f,
-        targetValue = 2f * Math.PI.toFloat(),
-        animationSpec = infiniteRepeatable(
-            animation = tween(1400, easing = LinearEasing),
-            repeatMode = RepeatMode.Restart
-        ),
-        label = "phase1"
+    val primaryColor = if (isAgentMode) Color(0xFF00F5D4) else Color(0xFFA855F7)
+    val forefrontColor = if (isAgentMode) Color(0xFFE6FFFA) else Color(0xFFF3E8FF)
+
+    // Smooth and boost the amplitude to prevent jerky jumps from 50ms polling
+    val smoothedAmplitude by animateFloatAsState(
+        targetValue = (rawAmplitude * 6f).coerceIn(0f, 1f),
+        animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow),
+        label = "amplitude"
     )
-    val phase2 by infiniteTransition.animateFloat(
-        initialValue = 0f,
-        targetValue = -2f * Math.PI.toFloat(),
-        animationSpec = infiniteRepeatable(
-            animation = tween(2000, easing = LinearEasing),
-            repeatMode = RepeatMode.Restart
-        ),
-        label = "phase2"
-    )
+
+    // Dynamically integrate phase for speed changes without jumps
+    var phase by remember { mutableFloatStateOf(0f) }
+    LaunchedEffect(Unit) {
+        var lastTime = withFrameNanos { it }
+        while (isActive) {
+            val currentTime = withFrameNanos { it }
+            val dt = (currentTime - lastTime) / 1e9f
+            lastTime = currentTime
+            
+            // Speed increases when voice detects (smoothedAmplitude is higher)
+            val speed = 1f + smoothedAmplitude * 4f
+            phase = (phase + speed * dt * 2f * Math.PI.toFloat()) % (1000f * Math.PI.toFloat())
+        }
+    }
+
+    val phase1 = phase
+    val phase2 = -phase * 0.7f
 
     Canvas(modifier = Modifier.fillMaxSize()) {
         val width = size.width
         val height = size.height
         val centerY = height / 2
 
-        // Determine actual height amplitude (minimum idle height of 0.1f so waves always move slightly)
-        val activeAmplitude = (amplitude.coerceIn(0f, 1f) * 0.85f + 0.15f) * (height * 0.35f)
+        // Determine actual height amplitude (minimum idle height of 0.1f)
+        val activeAmplitude = (smoothedAmplitude * 0.8f + 0.1f) * (height * 0.45f)
 
-        // Wave 1: Deep Indigo / Cyan-Blue (Background)
+        // Gradient brushes to fade out the waves near the left and right edges
+        val gradientBrush = Brush.horizontalGradient(
+            colors = listOf(Color.Transparent, forefrontColor.copy(alpha = 0.9f), Color.Transparent),
+            startX = 0f,
+            endX = width
+        )
+        val bgGradientBrush = Brush.horizontalGradient(
+            colors = listOf(Color.Transparent, primaryColor.copy(alpha = 0.4f), Color.Transparent),
+            startX = 0f,
+            endX = width
+        )
+
+        // Wave 1: Background Wave
         val path1 = Path()
         path1.moveTo(0f, centerY)
-        for (x in 0..width.toInt() step 8) {
+        for (x in 0..width.toInt() step 6) {
             val xVal = x.toFloat()
-            val angle = (xVal / width) * 2f * Math.PI.toFloat() * 1.4f + phase1
-            val yVal = centerY + sin(angle) * activeAmplitude * 0.6f
+            // Parabolic envelope to taper wave heights to 0 at edges
+            val envelope = sin((xVal / width) * Math.PI.toFloat())
+            val angle = (xVal / width) * 2f * Math.PI.toFloat() * 1.5f + phase1
+            // Adding high frequency vibration based on amplitude
+            val vibration = sin(xVal * 0.1f + phase1 * 3f) * smoothedAmplitude * 4f
+            val yVal = centerY + (sin(angle) * activeAmplitude * 0.5f + vibration) * envelope
             path1.lineTo(xVal, yVal)
         }
         drawPath(
             path = path1,
-            color = wave1Color,
-            style = Stroke(width = 2.dp.toPx())
+            brush = bgGradientBrush,
+            style = Stroke(width = 1.5.dp.toPx())
         )
 
-        // Wave 2: Amethyst / Teal (Middle)
+        // Wave 2: Middle Wave
         val path2 = Path()
         path2.moveTo(0f, centerY)
-        for (x in 0..width.toInt() step 8) {
+        for (x in 0..width.toInt() step 6) {
             val xVal = x.toFloat()
-            val angle = (xVal / width) * 2f * Math.PI.toFloat() * 2.0f + phase2
-            val yVal = centerY + sin(angle) * activeAmplitude * 0.8f
+            val envelope = sin((xVal / width) * Math.PI.toFloat())
+            val angle = (xVal / width) * 2f * Math.PI.toFloat() * 2.5f + phase2
+            val vibration = sin(xVal * 0.15f - phase2 * 4f) * smoothedAmplitude * 3f
+            val yVal = centerY + (sin(angle) * activeAmplitude * 0.7f + vibration) * envelope
             path2.lineTo(xVal, yVal)
         }
         drawPath(
             path = path2,
-            color = wave2Color,
-            style = Stroke(width = 2.5.dp.toPx())
+            brush = bgGradientBrush,
+            style = Stroke(width = 1.8.dp.toPx())
         )
 
-        // Wave 3: White/Lavender (Forefront)
+        // Wave 3: Forefront Delicate Wave
         val path3 = Path()
         path3.moveTo(0f, centerY)
-        for (x in 0..width.toInt() step 8) {
+        for (x in 0..width.toInt() step 6) {
             val xVal = x.toFloat()
-            val angle = (xVal / width) * 2f * Math.PI.toFloat() * 1.0f + (phase1 - phase2)
-            val yVal = centerY + sin(angle) * activeAmplitude * 1.0f
+            val envelope = sin((xVal / width) * Math.PI.toFloat())
+            val angle = (xVal / width) * 2f * Math.PI.toFloat() * 1.2f + (phase1 - phase2) * 0.5f
+            val vibration = sin(xVal * 0.08f + phase1 * 5f) * smoothedAmplitude * 5f
+            val yVal = centerY + (sin(angle) * activeAmplitude * 0.9f + vibration) * envelope
             path3.lineTo(xVal, yVal)
         }
         drawPath(
             path = path3,
-            color = wave3Color,
-            style = Stroke(width = 3.dp.toPx())
+            brush = gradientBrush,
+            style = Stroke(width = 2.dp.toPx())
         )
     }
 }

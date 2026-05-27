@@ -74,15 +74,21 @@ jobs:
         body: |
           ## 🎙️ Fluence ${{ env.TAG_NAME }}
 
-          ### 🐛 Bug Fixes
+          ### 🐛 Bug Fixes & UX Enhancements
 
-          **Critical: Keyboard Switch Crash Fixed**
-          - Fixed a catastrophic crash that occurred when tapping the keyboard switch icon in the IME pill
-          - Previously, switching keyboards corrupted the app state permanently — the only recovery was a full reinstall
-          - Root cause: a race condition in the service teardown left the native offline pipeline in a corrupt state and preserved stale recording state across sessions
-          - Now handles keyboard switching safely with full state reset and guaranteed pipeline cleanup
+          **Smooth Window Expansion on Right Edge**
+          - Linked Compose width animation directly to WindowManager X-coordinate repositioning.
+          - This eliminates the layout "jumping/wobbling" effect when expanding the bubble on the right edge of the screen, ensuring a buttery-smooth transition.
 
-          ### ✅ All v1.3.0 Features Remain Intact
+          **Enhanced Siri-Style Voice Waveform**
+          - Added dynamic, physics-based smoothing (using spring animation) to microphone amplitude signals, removing jerky transitions.
+          - Implemented frame-rate-independent continuous phase integration for seamless visual wave transitions.
+          - Added high-frequency voice vibration paths that trigger and scale dynamically when audio activity is detected.
+
+          **Unused Code Cleanup**
+          - Removed unused variables and cleaned up compiler warnings in the service logic.
+
+          ### ✅ Core Features Remain Intact
           - Offline transcription (SenseVoice-Small, ~230MB, fully on-device)
           - Floating bubble overlay with accessibility-based text injection
           - AI Agent / command mode
